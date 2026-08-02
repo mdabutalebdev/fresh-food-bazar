@@ -4,8 +4,8 @@
     "description": "Fresh Food Bazar E-Commerce Backend API",
     "main": "index.js",
     "scripts": {
-        "start": "node ./dist/server.js",
-        "start:prod": "node ./dist/server.js",
+        "start": "node ./dist/src/server.js",
+        "start:prod": "node ./dist/src/server.js",
         "start:dev": "ts-node-dev --respawn --transpile-only src/server.ts",
         "build": "tsc",
         "vercel-build": "tsc",
