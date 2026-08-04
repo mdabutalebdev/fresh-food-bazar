@@ -10,7 +10,7 @@
     {
       "name": "frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "fresh-food-bazar"],
+      "runtimeArgs": ["run", "dev", "--prefix", "fresh-food-bazar-frontend"],
       "port": 3000
     }
   ]
