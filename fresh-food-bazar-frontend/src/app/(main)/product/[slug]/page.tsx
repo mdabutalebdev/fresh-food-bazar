@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import {
     FiChevronLeft, FiChevronRight, FiShoppingBag, FiPhone, FiMinus, FiPlus,
 } from 'react-icons/fi';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useGetProductBySlugQuery, useGetProductsQuery } from '@/redux/api/productApi';
 import { useGetProductReviewsQuery } from '@/redux/api/reviewApi';
@@ -14,8 +14,9 @@ import { useGetSiteContentQuery } from '@/redux/api/siteContentApi';
 import ProductReviews from '@/components/products/ProductReviews';
 import ShopProductCard from '@/components/shared/ShopProductCard';
 import ShopSectionHeader from '@/components/shared/ShopSectionHeader';
-import { useAppDispatch } from '@/redux';
+import { useAppDispatch, useAppSelector } from '@/redux';
 import { addToCart } from '@/redux/slices/cartSlice';
+import { toggleWishlist } from '@/redux/slices/wishlistSlice';
 import { openCartModal } from '@/redux/slices/uiSlice';
 import { toGaItem, trackViewItem } from '@/lib/analytics/gtag';
 
@@ -52,11 +53,15 @@ export default function ProductDetailsPage() {
     const { data: res, isLoading, isError } = useGetProductBySlugQuery(slug as string, { skip: !slug });
     const product = res?.data;
 
+    const inWishlist = useAppSelector((s) => s.wishlist.items.some((i) => i.id === String(product?._id || '')));
+
+    // Same args as <ProductReviews> so RTK Query shares one fetch; summary.total
+    // is the approved-review count shown on the "Customer Reviews" tab.
     const { data: reviewsRes } = useGetProductReviewsQuery(
-        { productId: product?._id },
+        { productId: product?._id, limit: 50, sort: '-createdAt' },
         { skip: !product?._id }
     );
-    const reviews: any[] = useMemo(() => reviewsRes?.data || [], [reviewsRes]);
+    const reviewCount: number = reviewsRes?.meta?.summary?.total ?? (reviewsRes?.data?.length || 0);
 
     const { data: siteRes } = useGetSiteContentQuery({});
     const contact = siteRes?.data?.contact || {};
@@ -182,6 +187,20 @@ export default function ProductDetailsPage() {
         if (!validateSelection()) return;
         dispatch(addToCart(buildCartItem()));
         dispatch(openCartModal()); // slide the cart panel in
+    };
+
+    const handleToggleWishlist = () => {
+        dispatch(toggleWishlist({
+            id: String(product._id),
+            slug: product.slug || '',
+            name: product.name,
+            price,
+            mrp: original || price,
+            image: product.thumbnail || gallery[activeImage] || '',
+            category: categoryName || 'General',
+            rating: 0,
+        }));
+        toast.success(inWishlist ? 'Removed from wishlist' : 'Added to wishlist');
     };
 
     const handleBuyNow = () => {
@@ -323,8 +342,8 @@ export default function ProductDetailsPage() {
                                 </div>
                             )}
 
-                            {/* Quantity — rounded pill with orange circular ± buttons */}
-                            <div className="flex items-center gap-5">
+                            {/* Quantity + Add to Wishlist */}
+                            <div className="flex items-center gap-4 flex-wrap">
                                 <span className="text-[14px]" style={{ color: TEXT }}>Quantity:</span>
                                 <div className="inline-flex items-center gap-3 border border-gray-200 rounded-full px-2 py-1.5">
                                     <button
@@ -348,6 +367,15 @@ export default function ProductDetailsPage() {
                                         <FiPlus size={15} />
                                     </button>
                                 </div>
+
+                                <button
+                                    onClick={handleToggleWishlist}
+                                    className="inline-flex items-center gap-2 h-[42px] px-5 rounded-full border text-[14px] font-medium transition-opacity hover:opacity-90"
+                                    style={{ borderColor: inWishlist ? ORANGE : '#e5e7eb', color: inWishlist ? ORANGE : TEXT, background: inWishlist ? '#F47B200f' : '#fff' }}
+                                >
+                                    {inWishlist ? <FaHeart size={15} /> : <FaRegHeart size={15} />}
+                                    {inWishlist ? 'In Wishlist' : 'Add to Wishlist'}
+                                </button>
                             </div>
 
                             {/* Actions */}
@@ -408,32 +436,54 @@ export default function ProductDetailsPage() {
                     </div>
                 </div>
 
-                {/* ═══ Description ═══ */}
+                {/* ═══ Description / Customer Reviews — tabbed (like ghorerbazar) ═══ */}
                 <div className="mt-6 bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <div className="flex border-b border-gray-200">
-                        <span
-                            className="px-6 py-3.5 text-[14px] font-medium bg-gray-50 border-b-2"
-                            style={{ color: TEXT, borderColor: ORANGE }}
-                        >
-                            Description
-                        </span>
+                        {([
+                            { key: 'description', label: 'Description' },
+                            { key: 'reviews', label: `Customer Reviews (${reviewCount})` },
+                        ] as const).map(t => {
+                            const active = tab === t.key;
+                            return (
+                                <button
+                                    key={t.key}
+                                    onClick={() => setTab(t.key)}
+                                    className="px-5 sm:px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors"
+                                    style={{
+                                        color: active ? TEXT : '#8a94a0',
+                                        background: active ? '#f9fafb' : 'transparent',
+                                        borderColor: active ? ORANGE : 'transparent',
+                                    }}
+                                >
+                                    {t.label}
+                                </button>
+                            );
+                        })}
                     </div>
-                    <div className="p-6">
-                        {product.description ? (
-                            <div 
-                                className="text-[14.5px] leading-relaxed text-gray-600 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-3 [&_strong]:font-bold [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg"
-                                dangerouslySetInnerHTML={{ __html: product.description }}
-                            />
-                        ) : (
-                            <p className="text-[14.5px] leading-relaxed text-gray-600">
-                                No description available for this product yet.
-                            </p>
-                        )}
-                    </div>
+
+                    {tab === 'description' ? (
+                        <div className="p-6">
+                            {product.description ? (
+                                <div
+                                    className="text-[14.5px] leading-relaxed text-gray-600 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_p]:mb-3 [&_strong]:font-bold [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg"
+                                    dangerouslySetInnerHTML={{ __html: product.description }}
+                                />
+                            ) : (
+                                <p className="text-[14.5px] leading-relaxed text-gray-600">
+                                    No description available for this product yet.
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="p-6 lg:p-8">
+                            {/* Approved reviews list only — the submit form lives below, always visible */}
+                            <ProductReviews productId={product._id} part="list" embedded />
+                        </div>
+                    )}
                 </div>
 
-                {/* ═══ Reviews — summary, submit form and approved reviews ═══ */}
-                <ProductReviews productId={product._id} />
+                {/* ═══ Submit Your Review — summary + form, always below the tabs (like before) ═══ */}
+                <ProductReviews productId={product._id} part="submit" />
 
                 {/* ═══ Related products ═══ */}
                 <RelatedProducts product={product} />

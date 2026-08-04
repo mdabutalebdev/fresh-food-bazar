@@ -38,8 +38,10 @@ const NewFooter: React.FC = () => {
     const { data: siteRes } = useGetSiteContentQuery(undefined);
 
     // Social links from DB (admin → site-content). Only show ones with a real URL.
+    // Ticked (active) platforms show in the footer; the URL is just where the icon
+    // links. A ticked platform with no URL yet still shows (its icon links to '#').
     const socials: { label: string; url: string }[] = (siteRes?.data?.contact?.socials || [])
-        .filter((s: any) => s?.url && s.url !== '#');
+        .filter((s: any) => s?.label && s.active !== false);
 
     // WhatsApp link for "Live Chat" — normalized to wa.me format (88 + local digits)
     const waDigits = (siteRes?.data?.contact?.whatsapp || siteRes?.data?.floating?.whatsapp || '8801961864327').replace(/\D/g, '');
@@ -86,14 +88,16 @@ const NewFooter: React.FC = () => {
                             <div className="flex items-center gap-3 mt-4">
                                 {socials.map((s) => {
                                     const Icon = getSocialIcon(s.label);
+                                    const realUrl = s.url && s.url !== '#' ? s.url : '';
                                     return (
                                         <a
                                             key={s.label}
-                                            href={s.url}
-                                            target="_blank"
+                                            href={realUrl || '#'}
+                                            target={realUrl ? '_blank' : undefined}
                                             rel="noopener noreferrer"
                                             aria-label={s.label}
-                                            className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center text-white hover:bg-[var(--color-primary)] hover:text-[var(--color-primary-foreground)] transition-colors"
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-90"
+                                            style={{ background: '#F47B20' }}
                                         >
                                             <Icon size={14} />
                                         </a>
@@ -109,7 +113,6 @@ const NewFooter: React.FC = () => {
                         <ul className="space-y-2.5">
                             <li><Link href="/" className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">Home</Link></li>
                             <li><Link href="/products" className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">All Products</Link></li>
-                            <li><Link href="/services" className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">Our Services</Link></li>
                             <li><Link href="/contact" className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">Contact Us</Link></li>
                         </ul>
                     </div>
@@ -135,28 +138,18 @@ const NewFooter: React.FC = () => {
                     {/* Payment Methods */}
                     <div>
                         <h4 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">We Accept</h4>
-                        <div className="grid grid-cols-4 gap-2">
-                            <div className="bg-white border border-gray-200 rounded-md px-2 py-2 flex items-center justify-center h-9">
-                                <span className="text-xs font-bold tracking-tight" style={{ color: '#1A1F71' }}>VISA</span>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-md px-2 py-2 flex items-center justify-center h-9">
-                                <div className="flex items-center gap-0.5">
-                                    <div className="w-3.5 h-3.5 rounded-full bg-[#EB001B] opacity-80" />
-                                    <div className="w-3.5 h-3.5 rounded-full bg-[#F79E1B] opacity-80 -ml-2" />
+                        <div className="grid grid-cols-2 gap-2.5 max-w-[260px]">
+                            {[
+                                { name: 'bKash', logo: '/images/payment-bkash.jpg' },
+                                { name: 'Nagad', logo: '/images/payment-nagad.svg' },
+                                { name: 'Rocket', logo: '/images/payment-rocket.webp' },
+                                { name: 'Upay', logo: '/images/payment-upay.webp' },
+                            ].map((p) => (
+                                <div key={p.name} className="bg-white border border-gray-200 rounded-lg h-12 flex items-center justify-center p-2">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={p.logo} alt={p.name} className="max-h-full max-w-full object-contain" />
                                 </div>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-md px-2 py-2 flex items-center justify-center h-9">
-                                <span className="text-[10px] font-bold" style={{ color: '#D12053' }}>bKash</span>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-md px-2 py-2 flex items-center justify-center h-9">
-                                <span className="text-[10px] font-bold" style={{ color: '#F6921E' }}>Nagad</span>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-md px-2 py-2 flex items-center justify-center h-9">
-                                <span className="text-[10px] font-bold" style={{ color: '#8B2F8B' }}>Rocket</span>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-md px-2 py-2 flex items-center justify-center h-9">
-                                <span className="text-[9px] font-bold" style={{ color: '#00529B' }}>DBBL</span>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -167,7 +160,7 @@ const NewFooter: React.FC = () => {
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-2">
                         <p className="text-xs text-gray-400">
-                            © 2019-{new Date().getFullYear()} Fresh Food Bazar Technologies Ltd. All Rights Reserved.
+                            Copyright © {new Date().getFullYear()} Fresh Food Bazar
                         </p>
                         <div className="flex items-center gap-4">
                             <Link href="/terms" className="text-xs text-gray-400 hover:text-[var(--color-text-primary)] transition-colors">Terms & Conditions</Link>

@@ -62,6 +62,7 @@ const MENU: MenuItem[] = [
             { name: 'Payment Numbers', href: '/dashboard/admin/site-content?tab=payment' },
             { name: 'Floating Widget', href: '/dashboard/admin/site-content?tab=floating' },
             { name: 'Footer', href: '/dashboard/admin/site-content?tab=footer' },
+            { name: 'Social Links', href: '/dashboard/admin/site-content?tab=social' },
             { name: 'Legal Pages', href: '/dashboard/admin/site-content?tab=legal' },
         ],
     },

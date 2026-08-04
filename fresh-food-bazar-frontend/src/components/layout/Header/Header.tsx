@@ -74,6 +74,7 @@ const Header: React.FC = () => {
     const profileRef = useRef<HTMLDivElement>(null);
 
     const cartItems = useAppSelector((state) => state.cart.items);
+    const wishlistItems = useAppSelector((state) => state.wishlist.items);
     const { user, isAuthenticated } = useAppSelector((state) => state.auth);
     const avatarUrl = (user as any)?.avatar as string | undefined;
     const dispatch = useAppDispatch();
@@ -215,7 +216,7 @@ const Header: React.FC = () => {
                         {/* Actions */}
                         <div className="flex items-center gap-5 lg:gap-8 ml-auto shrink-0">
 
-                            <ActionItem href="/dashboard/user/orders" label="Track Order" className="hidden sm:flex">
+                            <ActionItem href="/track-order" label="Track Order" className="hidden sm:flex">
                                 <FiMapPin size={22} />
                             </ActionItem>
 
@@ -255,8 +256,18 @@ const Header: React.FC = () => {
                                 </ActionItem>
                             )}
 
-                            <ActionItem href="/dashboard/user/wishlist" label="Wishlist" className="hidden sm:flex">
-                                <FiHeart size={22} />
+                            <ActionItem href="/wishlist" label="Wishlist" className="hidden sm:flex">
+                                <span className="relative">
+                                    <FiHeart size={22} />
+                                    {wishlistItems.length > 0 && (
+                                        <span
+                                            className="absolute -top-2 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[11px] font-bold flex items-center justify-center"
+                                            style={{ background: BRAND_ORANGE }}
+                                        >
+                                            {wishlistItems.length}
+                                        </span>
+                                    )}
+                                </span>
                             </ActionItem>
 
                             {/* Opens the slide-in cart panel rather than a cart page */}
@@ -393,9 +404,9 @@ const Header: React.FC = () => {
                 <div className="lg:hidden bg-white border-t border-gray-100 max-h-[70vh] overflow-y-auto">
                     <div className="px-4 py-3">
                         <div className="grid grid-cols-2 gap-2 pb-3 mb-2 border-b border-gray-100">
-                            <MobileLink href="/dashboard/user/orders" label="Track Order" onClick={() => closeMobile()} />
+                            <MobileLink href="/track-order" label="Track Order" onClick={() => closeMobile()} />
                             <MobileLink href={isAuthenticated ? '/dashboard/user' : '/login'} label={isAuthenticated ? 'My Account' : 'Sign In'} onClick={() => closeMobile()} />
-                            <MobileLink href="/dashboard/user/wishlist" label="Wishlist" onClick={() => closeMobile()} />
+                            <MobileLink href="/wishlist" label="Wishlist" onClick={() => closeMobile()} />
                             <button
                                 onClick={() => { closeMobile(); dispatch(openCartModal()); }}
                                 className="px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-700 text-center"
@@ -495,9 +506,9 @@ function HeaderLogo() {
         <BrandLogo
             src={logoUrl}
             alt="Fresh Food Bazar"
-            /* Row is h-72/88 — 56/74 keeps the logo inside it, so the header
-               height is unchanged. */
-            className="h-[50px] lg:h-[65px] w-auto object-contain"
+            /* Row is h-64/72/88 — these heights keep the logo comfortably inside
+               the row, so the header height is unchanged. */
+            className="h-[46px] md:h-[52px] lg:h-[62px] w-auto object-contain"
         />
     );
 }

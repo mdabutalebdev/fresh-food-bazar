@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface WishlistItem {
     id: string;
+    slug?: string;
     name: string;
     price: number;
     mrp: number;

@@ -8,6 +8,7 @@ import { useGetProductsQuery } from '@/redux/api/productApi';
 import { useGetSiteContentQuery } from '@/redux/api/siteContentApi';
 import { useAppDispatch } from '@/redux';
 import { addToCart } from '@/redux/slices/cartSlice';
+import ShopProductCard from '@/components/shared/ShopProductCard';
 
 interface Product {
     _id?: string;
@@ -33,6 +34,31 @@ const BADGE_COUNT = 2;
 const money = (n: number) => `৳${n.toLocaleString('en-US')}`;
 
 const idOf = (p: any) => (typeof p === 'object' && p ? p._id : p) || '';
+
+// Outlined "Add To Cart" button that fills solid orange on hover/focus (white text).
+// Uses local state because the resting colors are inline (ORANGE), which would
+// otherwise beat any Tailwind hover class on specificity.
+function AddToCartButton({ onClick }: { onClick: () => void }) {
+    const [active, setActive] = React.useState(false);
+    return (
+        <button
+            onClick={onClick}
+            onMouseEnter={() => setActive(true)}
+            onMouseLeave={() => setActive(false)}
+            onFocus={() => setActive(true)}
+            onBlur={() => setActive(false)}
+            className="h-[34px] px-3.5 rounded-md border flex items-center gap-1.5 text-[13.5px] font-medium transition-colors"
+            style={{
+                borderColor: ORANGE,
+                background: active ? ORANGE : '#fff',
+                color: active ? '#fff' : ORANGE,
+            }}
+        >
+            <FiShoppingCart size={14} />
+            Add To Cart
+        </button>
+    );
+}
 
 const TopSellingProducts: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -100,10 +126,22 @@ const TopSellingProducts: React.FC = () => {
                     {heading}
                 </h2>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-[22px]">
+                {/* Mobile / tablet: compact product cards, 2 per row (same as the shop grid) */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:hidden">
                     {isLoading
                         ? Array.from({ length: LIMIT }).map((_, i) => (
-                            <div key={i} className="h-[240px] lg:h-[300px] rounded-lg bg-white/70 animate-pulse" />
+                            <div key={i} className="h-[290px] rounded-lg bg-white/70 animate-pulse" />
+                        ))
+                        : products.map((p) => (
+                            <ShopProductCard key={idOf(p)} product={p} />
+                        ))}
+                </div>
+
+                {/* Desktop: the large horizontal cards (unchanged) */}
+                <div className="hidden lg:grid grid-cols-2 gap-[22px]">
+                    {isLoading
+                        ? Array.from({ length: LIMIT }).map((_, i) => (
+                            <div key={i} className="h-[300px] rounded-lg bg-white/70 animate-pulse" />
                         ))
                         : products.map((p, i) => {
                             const id = String(p._id || p.id);
@@ -174,14 +212,7 @@ const TopSellingProducts: React.FC = () => {
                                         )}
 
                                         <div className="mt-4 flex items-center gap-2 flex-wrap">
-                                            <button
-                                                onClick={() => handleAddToCart(p)}
-                                                className="h-[34px] px-3.5 rounded-md border bg-white flex items-center gap-1.5 text-[13.5px] font-medium hover:bg-orange-50 transition-colors"
-                                                style={{ borderColor: ORANGE, color: ORANGE }}
-                                            >
-                                                <FiShoppingCart size={14} />
-                                                Add To Cart
-                                            </button>
+                                            <AddToCartButton onClick={() => handleAddToCart(p)} />
                                             <button
                                                 onClick={() => handleBuyNow(p)}
                                                 className="h-[34px] px-4 rounded-md text-white flex items-center gap-1.5 text-[13.5px] font-medium hover:brightness-95 transition"

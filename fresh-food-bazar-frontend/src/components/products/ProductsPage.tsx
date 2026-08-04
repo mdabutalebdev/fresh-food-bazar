@@ -368,28 +368,6 @@ function FilterPanel(props: {
                     ))}
                 </ul>
             </FilterCard>
-
-            <FilterCard title="Country">
-                <ul>
-                    {visibleCountries.map(country => {
-                        const isActive = country === 'All'
-                            ? !selectedCountry || selectedCountry === 'All'
-                            : selectedCountry === country;
-                        return (
-                            <li key={country}>
-                                <CheckRow checked={isActive} onChange={() => onCountrySelect(country)} label={country} />
-                            </li>
-                        );
-                    })}
-                </ul>
-                {COUNTRIES.length > VISIBLE_OPTIONS && (
-                    <MoreToggle
-                        expanded={showAllCountries}
-                        hidden={COUNTRIES.length - VISIBLE_OPTIONS}
-                        onClick={() => setShowAllCountries(v => !v)}
-                    />
-                )}
-            </FilterCard>
         </>
     );
 }

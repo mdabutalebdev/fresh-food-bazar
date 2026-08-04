@@ -9,7 +9,7 @@ import {
     FiPhone, FiMessageCircle, FiLayout, FiFileText, FiImage,
     FiSave, FiPlus, FiTrash2, FiCheckCircle, FiArrowUp, FiArrowDown, FiCreditCard,
     FiVideo, FiYoutube, FiUploadCloud, FiGrid, FiSearch, FiX,
-    FiMenu, FiCornerDownRight, FiExternalLink, FiEdit2, FiAlertCircle,
+    FiMenu, FiCornerDownRight, FiExternalLink, FiEdit2, FiAlertCircle, FiShare2, FiCheck,
 } from 'react-icons/fi';
 import { useGetProductsQuery } from '@/redux/api/productApi';
 import { useGetCategoriesQuery } from '@/redux/api/categoryApi';
@@ -52,6 +52,7 @@ const TABS = [
     { key: 'payment', label: 'Payment Numbers', icon: FiCreditCard },
     { key: 'floating', label: 'Floating Widget', icon: FiMessageCircle },
     { key: 'footer', label: 'Footer', icon: FiLayout },
+    { key: 'social', label: 'Social Links', icon: FiShare2 },
     { key: 'legal', label: 'Legal Pages', icon: FiFileText },
 ];
 
@@ -64,6 +65,7 @@ const SECTION_HINT: Record<string, string> = {
     payment: 'bKash / Rocket / Nagad numbers shown at checkout',
     floating: 'The floating call and WhatsApp buttons',
     footer: 'Company name, copyright and footer links',
+    social: 'Facebook, Instagram, WhatsApp and other footer social links',
     legal: 'Terms, Privacy, Refund, About Us and FAQs',
 };
 
@@ -82,6 +84,7 @@ export default function SiteContentPage() {
         payment: ['payment'],
         floating: ['floating'],
         footer: ['footer'],
+        social: ['contact'],
     };
     const [formData, setFormData] = useState<any>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
@@ -126,7 +129,11 @@ export default function SiteContentPage() {
                 payload.heroSideBanners = formData.heroSideBanners || [];
                 payload.heroSideBanner = formData.heroSideBanner || {};
             } else {
-                payload[activeTab] = formData[activeTab];
+                // A tab may save fields under a different key (e.g. the Social Links
+                // tab edits data that lives under `contact`), so use SECTION_FIELDS
+                // instead of the tab key itself.
+                const fields = SECTION_FIELDS[activeTab] || [activeTab];
+                fields.forEach((f) => { payload[f] = formData[f]; });
             }
             await updateContent(payload).unwrap();
             setSaveSuccess(true);
@@ -172,7 +179,10 @@ export default function SiteContentPage() {
                             </span>
                         )}
                         <button onClick={handleSave} disabled={isSaving} style={{ ...btnPrimary, opacity: isSaving ? 0.6 : 1 }}>
-                            {saveSuccess ? <><FiCheckCircle size={14} /> Saved!</> : <><FiSave size={14} /> {isSaving ? 'Saving...' : 'Save Changes'}</>}
+                            {/* Stable [icon][span] structure — swapping whole fragments here
+                                can trip React's DOM reconciliation on some setups. */}
+                            {saveSuccess ? <FiCheckCircle size={14} /> : <FiSave size={14} />}
+                            <span>{saveSuccess ? 'Saved!' : isSaving ? 'Saving...' : 'Save Changes'}</span>
                         </button>
                     </div>
                 )}
@@ -186,6 +196,7 @@ export default function SiteContentPage() {
             {activeTab === 'payment' && <PaymentTab data={formData} setData={setFormData} />}
             {activeTab === 'floating' && <FloatingTab data={formData} setData={setFormData} />}
             {activeTab === 'footer' && <FooterTab data={formData} setData={setFormData} />}
+            {activeTab === 'social' && <SocialTab data={formData} setData={setFormData} />}
             {activeTab === 'legal' && <LegalPagesTab />}
         </div>
     );
@@ -225,13 +236,6 @@ function ContactTab({ data, setData }: { data: any; setData: any }) {
     const updateSubject = (idx: number, value: string) => {
         const subs = [...c.subjects]; subs[idx] = value;
         updateField('subjects', subs);
-    };
-
-    const addSocial = () => updateField('socials', [...(c.socials || []), { label: '', url: '', color: '#000000' }]);
-    const removeSocial = (idx: number) => updateField('socials', c.socials.filter((_: any, i: number) => i !== idx));
-    const updateSocial = (idx: number, field: string, value: string) => {
-        const s = [...c.socials]; s[idx] = { ...s[idx], [field]: value };
-        updateField('socials', s);
     };
 
     return (
@@ -301,21 +305,85 @@ function ContactTab({ data, setData }: { data: any; setData: any }) {
                 {(c.tips || []).length === 0 && <p style={{ fontSize: '12px', color: '#bbb', textAlign: 'center', padding: '12px' }}>No tips added yet.</p>}
             </div>
 
-            {/* Social Links */}
-            <div style={card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0 }}>Social Links</h3>
-                    <button onClick={addSocial} style={btnSmall}><FiPlus size={13} /> Add</button>
+        </div>
+    );
+}
+
+/* ─── SOCIAL LINKS TAB ─── */
+function SocialTab({ data, setData }: { data: any; setData: any }) {
+    const c = data.contact || {};
+
+    const SOCIAL_PLATFORMS = [
+        { label: 'Facebook', color: '#1877F2', hint: 'https://facebook.com/yourpage' },
+        { label: 'Instagram', color: '#E4405F', hint: 'https://instagram.com/yourpage' },
+        { label: 'WhatsApp', color: '#25D366', hint: 'https://wa.me/8801XXXXXXXXX' },
+        { label: 'TikTok', color: '#111111', hint: 'https://tiktok.com/@yourpage' },
+        { label: 'LinkedIn', color: '#0A66C2', hint: 'https://linkedin.com/company/yourpage' },
+        { label: 'YouTube', color: '#FF0000', hint: 'https://youtube.com/@yourchannel' },
+    ];
+    const cleanUrl = (u: string) => (u && u !== '#' ? u : '');
+    const getSocial = (label: string) =>
+        (c.socials || []).find((s: any) => (s.label || '').toLowerCase() === label.toLowerCase()) || {};
+    const setSocial = (label: string, color: string, field: string, value: any) => {
+        setData((p: any) => {
+            const list = [...((p.contact?.socials) || [])];
+            const idx = list.findIndex((s: any) => (s.label || '').toLowerCase() === label.toLowerCase());
+            if (idx >= 0) list[idx] = { ...list[idx], [field]: value };
+            else list.push({ label, url: '', color, active: true, [field]: value });
+            return { ...p, contact: { ...p.contact, socials: list } };
+        });
+    };
+
+    return (
+        <div>
+            <div style={{ ...card, background: 'var(--color-primary-lightest)', borderColor: '#bbf7d0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FiCheckCircle size={16} color="#16a34a" />
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a' }}>
+                        Ticked platforms show in the <strong>footer</strong> &amp; <strong>Contact</strong> page. The URL is just where each icon links.
+                    </span>
                 </div>
-                {(c.socials || []).map((s: any, idx: number) => (
-                    <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '6px', alignItems: 'center' }}>
-                        <input value={s.label} onChange={e => updateSocial(idx, 'label', e.target.value)} placeholder="Label" style={{ ...input, width: '120px' }} />
-                        <input value={s.url} onChange={e => updateSocial(idx, 'url', e.target.value)} placeholder="URL" style={{ ...input, flex: 1 }} />
-                        <input type="color" value={s.color} onChange={e => updateSocial(idx, 'color', e.target.value)} style={{ width: '36px', height: '32px', border: '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer', padding: '2px' }} />
-                        <button onClick={() => removeSocial(idx)} style={btnDanger}><FiTrash2 size={13} /></button>
-                    </div>
-                ))}
-                {(c.socials || []).length === 0 && <p style={{ fontSize: '12px', color: '#bbb', textAlign: 'center', padding: '12px' }}>No socials added yet.</p>}
+            </div>
+
+            <div style={card}>
+                <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 4px' }}>Social Links</h3>
+                <p style={{ fontSize: '11.5px', color: '#9ca3af', margin: '0 0 14px' }}>Tick the platforms you want in the footer, then paste each one&apos;s URL (where the icon links) and press Save.</p>
+                {SOCIAL_PLATFORMS.map((p) => {
+                    const s: any = getSocial(p.label);
+                    const url = cleanUrl(s.url);
+                    const willShow = s.active !== false;
+                    return (
+                        <div key={p.label} style={{ display: 'flex', gap: '10px', marginBottom: '10px', alignItems: 'center' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '9px', width: '135px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={s.active !== false}
+                                    onChange={e => setSocial(p.label, p.color, 'active', e.target.checked)}
+                                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
+                                />
+                                {/* Custom box: orange when ticked, always a white check */}
+                                <span style={{
+                                    width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
+                                    border: `1.5px solid ${s.active !== false ? '#F47B20' : '#cbd5e1'}`,
+                                    background: s.active !== false ? '#F47B20' : '#fff',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s',
+                                }}>
+                                    {s.active !== false && <FiCheck size={13} color="#fff" strokeWidth={3} />}
+                                </span>
+                                {p.label}
+                            </label>
+                            <input
+                                value={url}
+                                onChange={e => setSocial(p.label, p.color, 'url', e.target.value)}
+                                placeholder={p.hint}
+                                style={{ ...input, flex: 1 }}
+                            />
+                            <span style={{ width: '64px', flexShrink: 0, fontSize: '11px', fontWeight: 700, textAlign: 'center', color: willShow ? '#16a34a' : '#cbd5e1' }}>
+                                {willShow ? '● Shown' : '○ Hidden'}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

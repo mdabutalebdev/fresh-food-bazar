@@ -12,8 +12,9 @@ interface ThemeContextType {
     isLoaded: boolean;
 }
 
-// User's brand logo (public/logo.jpg). Falls back to /logo.svg via onError if missing.
-const DEFAULT_LOGO = '/logo.jpg';
+// User's brand logo (transparent PNG so it blends into any header background —
+// the old /logo.jpg had a solid white box). Falls back to /logo.svg via onError if missing.
+const DEFAULT_LOGO = '/logo-transparent.png';
 
 const defaultTheme: ThemeContextType = {
     primaryColor: '#003B88',

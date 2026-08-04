@@ -29,7 +29,9 @@ const formatDate = (iso?: string) => {
 
 const initials = (name: string) => (name || 'A').trim().charAt(0).toUpperCase();
 
-const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
+// `part` lets the page render the submit form and the reviews list in separate
+// spots: 'submit' (rating summary + form), 'list' (approved reviews), or 'all'.
+const ProductReviews: React.FC<{ productId: string; embedded?: boolean; part?: 'all' | 'submit' | 'list' }> = ({ productId, embedded = false, part = 'all' }) => {
     const { data } = useGetProductReviewsQuery({ productId, limit: 50, sort: '-createdAt' }, { skip: !productId });
     const [submitReview, { isLoading: isSubmitting }] = useSubmitProductReviewMutation();
 
@@ -91,8 +93,12 @@ const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
         }
     };
 
+    const showSubmit = part === 'all' || part === 'submit';
+    const showList = part === 'all' || part === 'list';
+
     return (
-        <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 lg:p-8">
+        <div className={embedded ? '' : 'mt-6 bg-white rounded-lg border border-gray-200 p-6 lg:p-8'}>
+            {showSubmit && (
             <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 lg:gap-12">
 
                 {/* ── Rating summary ── */}
@@ -166,10 +172,16 @@ const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
                         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                         onDragLeave={() => setDragOver(false)}
                         onDrop={e => { e.preventDefault(); setDragOver(false); uploadFiles(e.dataTransfer.files); }}
-                        className={`flex flex-col items-center justify-center text-center border border-dashed rounded p-6 cursor-pointer transition-colors ${dragOver ? 'border-[var(--filter-accent)] bg-orange-50/40' : 'border-gray-300'}`}
+                        className="flex flex-col items-center justify-center text-center border border-dashed rounded-lg p-8 cursor-pointer transition-colors"
+                        style={{
+                            borderColor: 'var(--filter-accent)',
+                            background: dragOver
+                                ? 'color-mix(in srgb, var(--filter-accent) 12%, white)'
+                                : 'color-mix(in srgb, var(--filter-accent) 5%, white)',
+                        }}
                     >
-                        <FiUploadCloud size={22} className="text-gray-400" />
-                        <p className="text-[14px] font-bold mt-1" style={{ color: TEXT }}>
+                        <FiUploadCloud size={26} style={{ color: 'var(--filter-accent)' }} />
+                        <p className="text-[15px] font-bold mt-2" style={{ color: TEXT }}>
                             {uploading ? 'Uploading…' : 'Drag & Drop Images Here'}
                         </p>
                         <p className="text-[14px] text-gray-500 mt-1">or click to browse files ( {MAX_IMAGES} max )</p>
@@ -240,12 +252,15 @@ const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
                     </div>
                 </div>
             </div>
+            )}
 
-            {/* ── Customer reviews (approved only) ── */}
-            <div className="mt-10 pt-8 border-t border-gray-200">
-                <h3 className="text-[18px] font-bold mb-6" style={{ color: TEXT }}>
-                    Customer Reviews ({summary.total})
-                </h3>
+            {showList && (
+            <div className={showSubmit ? 'mt-10 pt-8 border-t border-gray-200' : ''}>
+                {showSubmit && (
+                    <h3 className="text-[18px] font-bold mb-6" style={{ color: TEXT }}>
+                        Customer Reviews ({summary.total})
+                    </h3>
+                )}
                 {reviews.length > 0 ? (
                     <div className="space-y-8">
                     {reviews.map(r => (
@@ -287,6 +302,7 @@ const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
                     <p className="text-[14px] text-gray-500">No reviews yet — be the first to review this product.</p>
                 )}
             </div>
+            )}
         </div>
     );
 };
