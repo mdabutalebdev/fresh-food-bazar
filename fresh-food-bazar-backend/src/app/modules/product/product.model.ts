@@ -138,10 +138,23 @@ productSchema.virtual('soldCount').get(function () {
 });
 
 // ── Pre-save hooks ─────────────────────────────────────────
-productSchema.pre('save', function (next) {
-    // Auto slug
+productSchema.pre('save', async function () {
+    // Auto slug — clean & human-readable (e.g. "womens-lawn-kameez-summer").
+    // No timestamp; uniqueness is guaranteed by appending -2, -3, … only on clash.
     if (this.isModified('name') && !this.slug) {
-        this.slug = this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now();
+        const base =
+            this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'product';
+        let candidate = base;
+        let n = 2;
+        // `this.constructor` is the Product model; use it to reach the static
+        // `exists` without a forward-reference to the `Product` const below.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const Model = this.constructor as any;
+        // eslint-disable-next-line no-await-in-loop
+        while (await Model.exists({ slug: candidate, _id: { $ne: this._id } })) {
+            candidate = `${base}-${n++}`;
+        }
+        this.slug = candidate;
     }
 
     // Auto SKU
@@ -172,8 +185,6 @@ productSchema.pre('save', function (next) {
             }
         });
     }
-
-    next();
 });
 
 // ── Pre-find: Exclude deleted ──────────────────────────────

@@ -175,6 +175,7 @@ const siteContentSchema = new Schema({
         imageUrl:   { type: String, default: '' }, // when mediaType === 'image'
         videoUrl:   { type: String, default: '' }, // uploaded video (Cloudinary)
         youtubeUrl: { type: String, default: '' }, // YouTube link
+        link:       { type: String, default: '' }, // where the banner navigates on click
         active: { type: Boolean, default: true },
         order: { type: Number, default: 0 },
     }],

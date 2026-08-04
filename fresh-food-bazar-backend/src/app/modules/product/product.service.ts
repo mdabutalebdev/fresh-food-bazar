@@ -153,9 +153,22 @@ const ProductService = {
 
     // ── Get product by slug ─────────────────────────────────────────────
     async getProductBySlug(slug: string) {
-        const product = await Product.findOne({ slug, isDeleted: { $ne: true } })
+        let product = await Product.findOne({ slug, isDeleted: { $ne: true } })
             .populate('category', 'name slug')
             .populate('subcategory', 'name slug');
+
+        // Backward-compat: old slugs ended with a "-<timestamp>" (e.g. "-1784991225336").
+        // If the clean slug misses, strip a trailing numeric segment and retry so any
+        // previously shared link keeps resolving to the product.
+        if (!product) {
+            const stripped = slug.replace(/-\d{6,}$/, '');
+            if (stripped && stripped !== slug) {
+                product = await Product.findOne({ slug: stripped, isDeleted: { $ne: true } })
+                    .populate('category', 'name slug')
+                    .populate('subcategory', 'name slug');
+            }
+        }
+
         if (!product) throw new AppError(404, 'Product not found');
         await Product.findByIdAndUpdate(product._id, { $inc: { viewCount: 1 } });
         return product;
