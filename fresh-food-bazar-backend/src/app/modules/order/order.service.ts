@@ -40,6 +40,30 @@ const OrderService = {
         return order;
     },
 
+    // Public order tracking — no login. The customer proves ownership with the
+    // Order ID plus the phone number used at checkout (last 10 digits match).
+    async trackOrder(orderId: string, phone: string) {
+        const cleanId = String(orderId || '').trim().toUpperCase();
+        const cleanPhone = String(phone || '').replace(/\D/g, '');
+        if (!cleanId || !cleanPhone) {
+            throw new AppError(400, 'Please enter both your Order ID and phone number');
+        }
+
+        const order = await Order.findOne({ orderId: cleanId, isDeleted: { $ne: true } })
+            .select('orderId status timeline items subtotal shippingCost discount total couponCode createdAt trackingNumber carrier paymentMethod paymentStatus shippingAddress')
+            .populate('items.product', 'name thumbnail slug');
+        if (!order) {
+            throw new AppError(404, 'No order found with that Order ID. Please check and try again.');
+        }
+
+        const orderPhone = String((order as any).shippingAddress?.phone || '').replace(/\D/g, '');
+        if (!orderPhone || orderPhone.slice(-10) !== cleanPhone.slice(-10)) {
+            throw new AppError(404, 'Order ID and phone number do not match.');
+        }
+
+        return order;
+    },
+
     async createOrder(userId: string, payload: any) {
         const { items, shippingAddress, paymentMethod, paymentDetails, couponCode, note } = payload;
 

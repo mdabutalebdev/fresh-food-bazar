@@ -18,6 +18,7 @@ const socialLinkSchema = new Schema({
     label: { type: String, required: true },
     url: { type: String, default: '#' },
     color: { type: String, default: '#000000' },
+    active: { type: Boolean, default: true },
 }, { _id: true });
 
 // ── Home page product slider ──

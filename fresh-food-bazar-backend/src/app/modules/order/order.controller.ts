@@ -62,6 +62,12 @@ const OrderController = {
             : 'Order placed successfully!';
         sendResponse(res, { statusCode: 201, success: true, message, data: result });
     }),
+
+    trackOrder: catchAsync(async (req: Request, res: Response) => {
+        const { orderId, phone } = req.body;
+        const order = await OrderService.trackOrder(orderId, phone);
+        sendResponse(res, { statusCode: 200, success: true, message: 'Order found', data: order });
+    }),
 };
 
 export default OrderController;

@@ -1,10 +1,14 @@
 /**
- * Migration: give every product a clean, human-readable slug (no timestamp).
+ * Migration: strip the trailing "-<timestamp>" from every product slug, keeping
+ * the human-readable base that's already there.
  *
- *   "Women's Lawn Kameez — Summer 2025"  →  "womens-lawn-kameez-summer-2025"
+ *   "smart-watch-fitness-tracker-ip68-1784991225338"  →  "smart-watch-fitness-tracker-ip68"
  *
- * Products that share a name get -2, -3, … suffixes. Oldest product keeps the
- * plain slug. Safe to run more than once (idempotent).
+ * We only remove a trailing run of 6+ digits (matches the old `Date.now()` suffix
+ * and product.service.ts's backward-compat lookup), so parts like "ip68" survive.
+ * If a slug is missing entirely we fall back to the product name. Products that
+ * would collide get -2, -3, … suffixes; the oldest keeps the plain slug. Safe to
+ * run more than once (idempotent).
  *
  * Run:  npx ts-node src/scripts/reslug-products.ts
  */
@@ -19,6 +23,12 @@ const MONGODB_URI = process.env.DATABASE_URL || process.env.MONGODB_URI || '';
 // Must match the slug rule in product.model.ts's pre-save hook.
 const toBaseSlug = (name: string): string =>
     (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'product';
+
+// Drop a trailing "-<timestamp>" (6+ digits). Keeps the readable base as-is so a
+// curated slug like "smart-watch-fitness-tracker-ip68" is preserved, not rebuilt
+// from the (possibly much longer) current product name.
+const stripTimestamp = (slug: string): string =>
+    (slug || '').replace(/-\d{6,}$/, '');
 
 async function reslugProducts() {
     try {
@@ -58,7 +68,9 @@ async function reslugProducts() {
         let changed = 0;
 
         for (const p of all) {
-            const base = toBaseSlug(p.name);
+            // Prefer the existing slug's readable base (minus timestamp); only fall
+            // back to the product name when a product has no slug at all.
+            const base = stripTimestamp(p.slug) || toBaseSlug(p.name);
             let slug = base;
             let n = 2;
             while (used.has(slug)) slug = `${base}-${n++}`;

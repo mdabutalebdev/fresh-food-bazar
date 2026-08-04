@@ -6,8 +6,9 @@ import { createOrderValidation, updateOrderStatusValidation } from './order.vali
 
 const router = express.Router();
 
-// ── Guest checkout (no auth required) ────────────
+// ── Public (no auth required) ────────────────────
 router.post('/guest-checkout', OrderController.guestCheckout);
+router.post('/track', OrderController.trackOrder); // track an order by Order ID + phone
 
 // ── User routes ──────────────────────────────────
 router.get('/my', authMiddleware, OrderController.getMyOrders);
