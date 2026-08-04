@@ -405,7 +405,8 @@ const ProductsPage: React.FC = () => {
 
     const categoryParam = searchParams.get('category') || '';
     const subcategoryParam = searchParams.get('subcategory') || '';
-    const searchParam = searchParams.get('q') || '';
+    // `s` is the current search param; `q` kept as a fallback so old links still resolve.
+    const searchParam = searchParams.get('s') || searchParams.get('q') || '';
     const countryParam = searchParams.get('country') || '';
     const brandParam = searchParams.get('brand') || '';
     const flagParam = searchParams.get('flag') || '';
@@ -500,16 +501,17 @@ const ProductsPage: React.FC = () => {
     // Central URL builder — only the passed keys change, the rest are preserved
     const pushFilters = (next: {
         category?: string; subcategory?: string; country?: string;
-        q?: string; brand?: string; flag?: string;
+        s?: string; brand?: string; flag?: string;
     }) => {
         const category = next.category !== undefined ? next.category : selectedCategory;
         const subcategory = next.subcategory !== undefined ? next.subcategory : selectedSubcategory;
         const country = next.country !== undefined ? next.country : selectedCountry;
-        const q = next.q !== undefined ? next.q : searchParam;
+        const s = next.s !== undefined ? next.s : searchParam;
         const brand = next.brand !== undefined ? next.brand : brandParam;
         const flag = next.flag !== undefined ? next.flag : flagParam;
         const params = new URLSearchParams();
-        if (q && q.trim()) params.set('q', q.trim());
+        // `.set` encodes spaces as `+`, giving the `?s=womens+shop` format.
+        if (s && s.trim()) params.set('s', s.trim());
         if (category) params.set('category', category);
         if (subcategory) params.set('subcategory', subcategory);
         if (country && country !== 'All') params.set('country', country);

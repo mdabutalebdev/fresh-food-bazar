@@ -166,9 +166,9 @@ const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
                         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                         onDragLeave={() => setDragOver(false)}
                         onDrop={e => { e.preventDefault(); setDragOver(false); uploadFiles(e.dataTransfer.files); }}
-                        className={`border border-dashed rounded p-4 cursor-pointer transition-colors ${dragOver ? 'border-[var(--filter-accent)] bg-orange-50/40' : 'border-gray-300'}`}
+                        className={`flex flex-col items-center justify-center text-center border border-dashed rounded p-6 cursor-pointer transition-colors ${dragOver ? 'border-[var(--filter-accent)] bg-orange-50/40' : 'border-gray-300'}`}
                     >
-                        <FiUploadCloud size={20} className="text-gray-400" />
+                        <FiUploadCloud size={22} className="text-gray-400" />
                         <p className="text-[14px] font-bold mt-1" style={{ color: TEXT }}>
                             {uploading ? 'Uploading…' : 'Drag & Drop Images Here'}
                         </p>
@@ -241,9 +241,13 @@ const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
                 </div>
             </div>
 
-            {/* ── Approved reviews ── */}
-            {reviews.length > 0 && (
-                <div className="mt-10 pt-8 border-t border-gray-200 space-y-8">
+            {/* ── Customer reviews (approved only) ── */}
+            <div className="mt-10 pt-8 border-t border-gray-200">
+                <h3 className="text-[18px] font-bold mb-6" style={{ color: TEXT }}>
+                    Customer Reviews ({summary.total})
+                </h3>
+                {reviews.length > 0 ? (
+                    <div className="space-y-8">
                     {reviews.map(r => (
                         <div key={r._id} className="flex gap-5">
                             <div className="w-14 h-14 shrink-0 rounded-full bg-[#f0f0f0] flex items-center justify-center overflow-hidden">
@@ -278,8 +282,11 @@ const ProductReviews: React.FC<{ productId: string }> = ({ productId }) => {
                             </div>
                         </div>
                     ))}
-                </div>
-            )}
+                    </div>
+                ) : (
+                    <p className="text-[14px] text-gray-500">No reviews yet — be the first to review this product.</p>
+                )}
+            </div>
         </div>
     );
 };

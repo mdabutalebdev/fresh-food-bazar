@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { getYouTubeEmbedUrl } from '@/utils/youtube';
 
 export interface HeroSlide {
@@ -8,6 +9,7 @@ export interface HeroSlide {
     imageUrl?: string;
     videoUrl?: string;
     youtubeUrl?: string;
+    link?: string;
     active?: boolean;
 }
 
@@ -93,14 +95,21 @@ const HeroCarousel: React.FC<{ slides: HeroSlide[]; className?: string }> = ({ s
         <div
             className={`group relative w-full overflow-hidden bg-black ${className ?? 'aspect-[16/9] sm:aspect-[16/7] lg:aspect-[16/5.5]'}`}
         >
-            {slides.map((slide, idx) => (
-                <div
-                    key={idx}
-                    className={`absolute inset-0 transition-opacity duration-700 ${idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                >
-                    {renderSlide(slide, idx === current)}
-                </div>
-            ))}
+            {slides.map((slide, idx) => {
+                const content = renderSlide(slide, idx === current);
+                return (
+                    <div
+                        key={idx}
+                        className={`absolute inset-0 transition-opacity duration-700 ${idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    >
+                        {/* A link makes the whole banner clickable; the arrows/dots sit
+                            above it (z-10) so they keep working. */}
+                        {slide.link ? (
+                            <Link href={slide.link} className="block w-full h-full">{content}</Link>
+                        ) : content}
+                    </div>
+                );
+            })}
 
             {/* Arrows — 40px squares flush to each edge, hidden until the banner
                 is hovered. White with an orange chevron, inverting on hover. */}

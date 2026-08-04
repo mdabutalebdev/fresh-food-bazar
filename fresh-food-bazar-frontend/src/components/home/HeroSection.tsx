@@ -77,7 +77,7 @@ const HeroSection: React.FC = () => {
                                 )
                             ) : (
                                 <HeroCarousel
-                                    slides={sideBanners.map(b => ({ mediaType: 'image' as const, imageUrl: b.imageUrl }))}
+                                    slides={sideBanners.map(b => ({ mediaType: 'image' as const, imageUrl: b.imageUrl, link: b.link }))}
                                     className="h-full"
                                 />
                             )}

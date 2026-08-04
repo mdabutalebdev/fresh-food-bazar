@@ -323,25 +323,27 @@ export default function ProductDetailsPage() {
                                 </div>
                             )}
 
-                            {/* Quantity */}
+                            {/* Quantity — rounded pill with orange circular ± buttons */}
                             <div className="flex items-center gap-5">
                                 <span className="text-[14px]" style={{ color: TEXT }}>Quantity:</span>
-                                <div className="flex items-center border border-gray-300 rounded">
+                                <div className="inline-flex items-center gap-3 border border-gray-200 rounded-full px-2 py-1.5">
                                     <button
                                         onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                                         disabled={quantity <= 1}
                                         aria-label="Decrease quantity"
-                                        className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                                        style={{ background: ORANGE }}
                                     >
                                         <FiMinus size={15} />
                                     </button>
-                                    <span className="w-10 text-center text-[15px] font-medium" style={{ color: TEXT }}>
+                                    <span className="min-w-8 text-center text-[15px] font-semibold" style={{ color: TEXT }}>
                                         {quantity}
                                     </span>
                                     <button
                                         onClick={() => setQuantity((q) => q + 1)}
                                         aria-label="Increase quantity"
-                                        className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-90"
+                                        style={{ background: ORANGE }}
                                     >
                                         <FiPlus size={15} />
                                     </button>

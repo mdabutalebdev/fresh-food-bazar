@@ -715,6 +715,7 @@ function HeroSlidesTab({ data, setData, onSave, isSaving }: { data: any; setData
                 imageUrl: isVideo ? '' : form.imageUrl,
                 videoUrl: isVideo && videoSource === 'upload' ? form.videoUrl : '',
                 youtubeUrl: isVideo && videoSource === 'youtube' ? form.youtubeUrl.trim() : '',
+                link: form.link || '',
                 active: form.active,
             };
             if (editing && editing.position === 'main') {
@@ -1079,6 +1080,16 @@ function HeroSlidesTab({ data, setData, onSave, isSaving }: { data: any; setData
                                             )}
                                         </>
                                     )}
+
+                                    <div style={{ marginTop: '14px' }}>
+                                        <label style={label}>Link when clicked <span style={{ fontWeight: 400, color: '#98a2b3' }}>(optional)</span></label>
+                                        <input
+                                            style={input}
+                                            value={form.link}
+                                            onChange={e => setForm({ ...form, link: e.target.value })}
+                                            placeholder="/products?s=Honey"
+                                        />
+                                    </div>
                                 </div>
                             )}
 
@@ -1095,7 +1106,7 @@ function HeroSlidesTab({ data, setData, onSave, isSaving }: { data: any; setData
                                             style={input}
                                             value={form.link}
                                             onChange={e => setForm({ ...form, link: e.target.value })}
-                                            placeholder="/products?q=Honey"
+                                            placeholder="/products?s=Honey"
                                         />
                                     </div>
                                 </div>

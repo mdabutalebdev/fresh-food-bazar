@@ -60,7 +60,8 @@ const SearchBox: React.FC<{ className?: string; onNavigate?: () => void }> = ({ 
         setOpen(false);
         dispatch(clearImageSearch());
         onNavigate?.();
-        router.push(`/products?q=${encodeURIComponent(t)}`);
+        // `?s=beef+achar` style — `s` param, spaces as `+` (URLSearchParams does both).
+        router.push(`/products?${new URLSearchParams({ s: t }).toString()}`);
     };
 
     const goToProduct = (p: Suggestion) => {
