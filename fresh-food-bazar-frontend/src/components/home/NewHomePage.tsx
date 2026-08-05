@@ -15,6 +15,7 @@ import HeroSection from './HeroSection';
 import FeaturedCategories from './FeaturedCategories';
 import TopSellingProducts from './TopSellingProducts';
 import HomeSections from './HomeSections';
+import FlagSections from './FlagSections';
 import CustomerReviews from './CustomerReviews';
 
 const LIMIT = 20;
@@ -212,8 +213,12 @@ const NewHomePage: React.FC = () => {
             {/* Featured Categories — driven by Admin → Categories */}
             <FeaturedCategories />
 
-            {/* Top Selling — ranked by each product's totalSold */}
+            {/* Top Selling — products flagged "Best Selling", ranked by totalSold */}
             <TopSellingProducts />
+
+            {/* Automatic flag sliders: New Arrivals, Featured, On Sale, Combo Deals.
+                Driven purely by the flags set on each product; each hides when empty. */}
+            <FlagSections />
 
             {/* Product sliders — added, titled and ordered in Admin → Site Content */}
             <HomeSections />

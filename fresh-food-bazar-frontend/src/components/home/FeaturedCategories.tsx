@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useGetCategoriesQuery } from '@/redux/api/categoryApi';
@@ -22,6 +22,8 @@ const ARROW = '#F47B20';
 
 const FeaturedCategories: React.FC = () => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    // Auto-slide pauses while the user is hovering / dragging the row.
+    const pausedRef = useRef(false);
     const { data, isLoading } = useGetCategoriesQuery({});
 
     // Only top-level categories the admin has chosen to show on the homepage.
@@ -36,6 +38,27 @@ const FeaturedCategories: React.FC = () => {
         const amount = Math.min(el.clientWidth * 0.8, 540);
         el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
     };
+
+    // Auto-slide: nudge the row along every few seconds, looping back to the start
+    // when it reaches the end. Pauses on hover and respects reduced-motion.
+    useEffect(() => {
+        if (categories.length === 0) return;
+        if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+        const id = setInterval(() => {
+            const el = scrollRef.current;
+            if (!el || pausedRef.current || document.hidden) return;
+            // No overflow to scroll → nothing to do.
+            if (el.scrollWidth <= el.clientWidth + 4) return;
+            const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+            if (atEnd) {
+                el.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                el.scrollBy({ left: Math.min(el.clientWidth * 0.5, 320), behavior: 'smooth' });
+            }
+        }, 3000);
+        return () => clearInterval(id);
+    }, [categories.length]);
 
     if (!isLoading && categories.length === 0) return null;
 
@@ -71,6 +94,9 @@ const FeaturedCategories: React.FC = () => {
 
                     <div
                         ref={scrollRef}
+                        onMouseEnter={() => { pausedRef.current = true; }}
+                        onMouseLeave={() => { pausedRef.current = false; }}
+                        onTouchStart={() => { pausedRef.current = true; }}
                         className="flex gap-5 lg:gap-[46px] overflow-x-auto no-scrollbar scroll-smooth pb-1"
                     >
                         {isLoading

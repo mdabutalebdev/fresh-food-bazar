@@ -12,10 +12,8 @@ interface HeroSideBanner {
     order?: number;
 }
 
-// Shipped defaults, shown until banners are uploaded from Admin → Site Content → Hero.
-// The filenames contain spaces, so they must be URL-encoded.
-const DEFAULT_SLIDE = '/images/hero%20banar01.png';
-const DEFAULT_SIDE_BANNER = '/images/hero%20banar02.png';
+// No shipped/default banners: the hero area only shows what an admin uploads in
+// Admin → Site Content → Hero. Nothing configured → the whole hero stays empty.
 
 // Both panels share this height so their top and bottom edges line up exactly.
 const PANEL_HEIGHT = 'h-[200px] sm:h-[280px] md:h-[340px] lg:h-[392px]';
@@ -26,13 +24,11 @@ const HeroSection: React.FC = () => {
     // up on the next page load instead of serving a stale cached response.
     const { data: res } = useGetSiteContentQuery(undefined, { refetchOnMountOrArgChange: true });
 
-    const apiSlides: HeroSlide[] = res?.data?.heroSlides?.filter((s: HeroSlide) => s.active !== false) || [];
-    const slides: HeroSlide[] = apiSlides.length > 0
-        ? apiSlides
-        : [{ mediaType: 'image', imageUrl: DEFAULT_SLIDE }];
+    // Main carousel slides — admin-uploaded only, no default fallback.
+    const slides: HeroSlide[] = res?.data?.heroSlides?.filter((s: HeroSlide) => s.active !== false) || [];
 
     // Side banners are an array now; the old single `heroSideBanner` is the fallback
-    // for installs that haven't been migrated yet.
+    // for installs that haven't been migrated yet. No default banner beyond that.
     const legacySide: HeroSideBanner = res?.data?.heroSideBanner || {};
     const sideList: HeroSideBanner[] = (res?.data?.heroSideBanners || [])
         .filter((b: HeroSideBanner) => b.active !== false && b.imageUrl)
@@ -42,12 +38,12 @@ const HeroSection: React.FC = () => {
         ? sideList
         : legacySide.imageUrl && legacySide.active !== false
             ? [legacySide]
-            : [{ imageUrl: DEFAULT_SIDE_BANNER }];
+            : [];
 
-    // Hidden only when an admin turned every side banner off
-    const showSide = sideList.length > 0
-        || legacySide.active !== false
-        || (res?.data?.heroSideBanners?.length ?? 0) === 0;
+    const showSide = sideBanners.length > 0;
+
+    // Nothing uploaded yet → keep the hero area empty (client request: no default banner).
+    if (slides.length === 0 && !showSide) return null;
 
     const single = sideBanners.length === 1 ? sideBanners[0] : null;
 
@@ -56,15 +52,17 @@ const HeroSection: React.FC = () => {
             <div className="mx-auto max-w-[1500px] px-4 lg:px-8 py-4 lg:py-5">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-[18px]">
 
-                    {/* Carousel — two thirds */}
+                    {/* Carousel — two thirds (full width when there's no side banner) */}
+                    {slides.length > 0 && (
                     <div className={`${showSide ? 'lg:col-span-2' : 'lg:col-span-3'} rounded-lg overflow-hidden ${PANEL_HEIGHT}`}>
                         <HeroCarousel slides={slides} className="h-full" />
                     </div>
+                    )}
 
                     {/* Side banner — one third on desktop. Hidden on phones/tablets so
                         only the main slider shows there (like the reference mobile). */}
                     {showSide && (
-                        <div className={`hidden lg:block lg:col-span-1 rounded-lg overflow-hidden bg-[#0A2A1C] ${PANEL_HEIGHT}`}>
+                        <div className={`hidden lg:block ${slides.length > 0 ? 'lg:col-span-1' : 'lg:col-span-3'} rounded-lg overflow-hidden bg-[#0A2A1C] ${PANEL_HEIGHT}`}>
                             {single ? (
                                 single.link ? (
                                     <Link href={single.link} className="block w-full h-full">

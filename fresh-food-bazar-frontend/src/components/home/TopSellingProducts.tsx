@@ -8,6 +8,7 @@ import { useGetProductsQuery } from '@/redux/api/productApi';
 import { useGetSiteContentQuery } from '@/redux/api/siteContentApi';
 import { useAppDispatch } from '@/redux';
 import { addToCart } from '@/redux/slices/cartSlice';
+import { openCartModal } from '@/redux/slices/uiSlice';
 import ShopProductCard from '@/components/shared/ShopProductCard';
 
 interface Product {
@@ -60,6 +61,26 @@ function AddToCartButton({ onClick }: { onClick: () => void }) {
     );
 }
 
+// "Buy now" — solid orange that turns black on hover/focus (client request).
+// Inline colors, so hover is driven by local state rather than a Tailwind class.
+function BuyNowButton({ onClick }: { onClick: () => void }) {
+    const [active, setActive] = React.useState(false);
+    return (
+        <button
+            onClick={onClick}
+            onMouseEnter={() => setActive(true)}
+            onMouseLeave={() => setActive(false)}
+            onFocus={() => setActive(true)}
+            onBlur={() => setActive(false)}
+            className="h-[34px] px-4 rounded-md text-white flex items-center gap-1.5 text-[13.5px] font-medium transition-colors"
+            style={{ background: active ? '#000' : ORANGE }}
+        >
+            <FiShoppingCart size={14} />
+            Buy now
+        </button>
+    );
+}
+
 const TopSellingProducts: React.FC = () => {
     const dispatch = useAppDispatch();
     const router = useRouter();
@@ -78,8 +99,11 @@ const TopSellingProducts: React.FC = () => {
         { ids: pickedIds.join(','), limit: 40 },
         { skip: !hasPicked },
     );
+    // Only products an admin flagged "Best Selling" fill this block (ranked by how
+    // much each has actually sold). A product with no flag no longer leaks in here
+    // just because it happens to have sales.
     const { data: autoData, isLoading } = useGetProductsQuery(
-        { sort: '-totalSold', limit: LIMIT },
+        { flag: 'best-selling', sort: '-totalSold', limit: LIMIT },
         { skip: hasPicked },
     );
 
@@ -106,7 +130,10 @@ const TopSellingProducts: React.FC = () => {
         };
     };
 
-    const handleAddToCart = (p: Product) => dispatch(addToCart(buildCartItem(p)));
+    const handleAddToCart = (p: Product) => {
+        dispatch(addToCart(buildCartItem(p)));
+        dispatch(openCartModal()); // slide the header cart panel in, so the add is visible
+    };
 
     const handleBuyNow = (p: Product) => {
         dispatch(addToCart(buildCartItem(p)));
@@ -213,14 +240,7 @@ const TopSellingProducts: React.FC = () => {
 
                                         <div className="mt-4 flex items-center gap-2 flex-wrap">
                                             <AddToCartButton onClick={() => handleAddToCart(p)} />
-                                            <button
-                                                onClick={() => handleBuyNow(p)}
-                                                className="h-[34px] px-4 rounded-md text-white flex items-center gap-1.5 text-[13.5px] font-medium hover:brightness-95 transition"
-                                                style={{ background: ORANGE }}
-                                            >
-                                                <FiShoppingCart size={14} />
-                                                Buy now
-                                            </button>
+                                            <BuyNowButton onClick={() => handleBuyNow(p)} />
                                         </div>
                                     </div>
                                 </div>

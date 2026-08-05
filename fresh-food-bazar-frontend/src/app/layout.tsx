@@ -10,24 +10,26 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.freshfoodbazar.com"),
   title: {
-    default: "Fresh Food Bazar — Your Trusted Global Trading Platform",
+    // Brand-only fallback. Pages set their own title, which the template turns
+    // into "<Page> | Fresh Food Bazar".
+    default: "Fresh Food Bazar",
     template: "%s | Fresh Food Bazar",
   },
-  description: "Source quality products from China with Fresh Food Bazar. Sourcing, shipping, freight forwarding, and customs solutions for Bangladesh.",
-  keywords: ["fresh food bazar", "trading", "sourcing", "china products", "import", "ecommerce", "bangladesh", "shipping", "freight forwarding"],
+  description: "Fresh Food Bazar — fresh, quality food and grocery delivered across Bangladesh at the best prices.",
+  keywords: ["fresh food bazar", "fresh food", "grocery", "online food", "bangladesh", "pickle", "honey"],
   applicationName: "Fresh Food Bazar",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "Fresh Food Bazar",
-    title: "Fresh Food Bazar — Your Trusted Global Trading Platform",
-    description: "Source quality products from China with Fresh Food Bazar. Sourcing, shipping, and customs solutions for Bangladesh.",
+    title: "Fresh Food Bazar",
+    description: "Fresh Food Bazar — fresh, quality food and grocery delivered across Bangladesh at the best prices.",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fresh Food Bazar — Your Trusted Global Trading Platform",
-    description: "Source quality products from China with Fresh Food Bazar. Sourcing, shipping, and customs solutions for Bangladesh.",
+    title: "Fresh Food Bazar",
+    description: "Fresh Food Bazar — fresh, quality food and grocery delivered across Bangladesh at the best prices.",
   },
   robots: { index: true, follow: true },
 };

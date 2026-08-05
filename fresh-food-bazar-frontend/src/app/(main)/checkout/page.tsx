@@ -87,6 +87,15 @@ const CheckoutPage = () => {
     const [agreed, setAgreed] = useState(true);
     const [couponOpen, setCouponOpen] = useState(false);
     const [billingSame, setBillingSame] = useState(true);
+    // Separate billing details — only used when "Same as shipping" is unticked.
+    const [billing, setBilling] = useState({
+        billingFullName: '', billingPhone: '', billingEmail: '',
+        billingAddress: '', billingCity: '', billingArea: '',
+    });
+    const handleBillingChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setBilling(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        if (errors[e.target.name]) setErrors(prev => { const n = { ...prev }; delete n[e.target.name]; return n; });
+    };
     // Coupons used to live on the cart page; that page is gone, so entry moved here
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setCouponError] = useState('');
@@ -164,6 +173,15 @@ const CheckoutPage = () => {
             if (!paymentDetails.senderNumber.trim()) e.senderNumber = 'Sender number is required';
             if (!paymentDetails.transactionId.trim()) e.transactionId = 'Transaction ID is required';
             if (!paymentDetails.paymentTime.trim()) e.paymentTime = 'Payment time is required';
+        }
+        // Billing is only validated when it isn't the same as shipping.
+        if (!billingSame) {
+            if (!billing.billingFullName.trim()) e.billingFullName = 'Billing name is required';
+            if (!billing.billingPhone.trim()) e.billingPhone = 'Billing phone is required';
+            else if (!/^01\d{9}$/.test(billing.billingPhone.replace(/[\s-]/g, ''))) e.billingPhone = 'Enter a valid 11-digit number';
+            if (billing.billingEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billing.billingEmail.trim())) e.billingEmail = 'Enter a valid email';
+            if (!billing.billingAddress.trim()) e.billingAddress = 'Billing address is required';
+            if (!billing.billingCity.trim()) e.billingCity = 'Please select a district';
         }
         return e;
     };
@@ -251,6 +269,16 @@ const CheckoutPage = () => {
             },
             ...(note.trim() ? { note: note.trim() } : {}),
             ...(appliedCoupon ? { couponCode: appliedCoupon.code, discount: appliedCoupon.discount } : {}),
+            ...(billingSame ? {} : {
+                billingAddress: {
+                    fullName: billing.billingFullName,
+                    phone: billing.billingPhone,
+                    email: billing.billingEmail,
+                    address: billing.billingAddress,
+                    area: billing.billingArea,
+                    city: billing.billingCity,
+                },
+            }),
         };
 
         try {
@@ -475,9 +503,53 @@ const CheckoutPage = () => {
                                     </label>
                                 </div>
                                 {!billingSame && (
-                                    <p className="px-5 pb-4 -mt-1 text-[12.5px] text-gray-500">
-                                        Billing details will be confirmed over the phone before delivery.
-                                    </p>
+                                    <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <input type="text" name="billingFullName" value={billing.billingFullName} onChange={handleBillingChange}
+                                                placeholder="Billing Name *" className={cls('billingFullName')} />
+                                            <FieldError field="billingFullName" />
+                                        </div>
+
+                                        <div>
+                                            <div className={`flex items-stretch rounded overflow-hidden border ${errors.billingPhone ? 'border-red-400' : 'border-gray-300'}`}>
+                                                <span className="px-3 flex items-center bg-gray-50 border-r border-gray-300 text-[13px] text-gray-500">88</span>
+                                                <input type="tel" name="billingPhone" value={billing.billingPhone} onChange={handleBillingChange}
+                                                    placeholder="01XXXXXXXXX *"
+                                                    className="flex-1 px-3.5 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-400" />
+                                            </div>
+                                            <FieldError field="billingPhone" />
+                                        </div>
+
+                                        <div className="md:col-span-2 relative">
+                                            <input type="email" name="billingEmail" value={billing.billingEmail} onChange={handleBillingChange}
+                                                placeholder="example@gmail.com (Optional)" className={cls('billingEmail')} />
+                                            <FiMail size={15} className="absolute right-3.5 top-3 text-gray-400 pointer-events-none" />
+                                            <FieldError field="billingEmail" />
+                                        </div>
+
+                                        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <select disabled defaultValue="Bangladesh"
+                                                className={`${inputClass} cursor-not-allowed bg-gray-50`}>
+                                                <option value="Bangladesh">BANGLADESH</option>
+                                            </select>
+                                            <div>
+                                                <select name="billingCity" value={billing.billingCity} onChange={handleBillingChange}
+                                                    className={`${cls('billingCity')} cursor-pointer ${!billing.billingCity ? 'text-gray-400' : ''}`}>
+                                                    <option value="">Select District *</option>
+                                                    {DISTRICTS.map(d => <option key={d} value={d} className="text-gray-800">{d}</option>)}
+                                                </select>
+                                                <FieldError field="billingCity" />
+                                            </div>
+                                            <input type="text" name="billingArea" value={billing.billingArea} onChange={handleBillingChange}
+                                                placeholder="Thana / Area (Optional)" className={inputClass} />
+                                        </div>
+
+                                        <div className="md:col-span-2">
+                                            <input type="text" name="billingAddress" value={billing.billingAddress} onChange={handleBillingChange}
+                                                placeholder="ex: House no. / building / street / area *" className={cls('billingAddress')} />
+                                            <FieldError field="billingAddress" />
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>

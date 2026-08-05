@@ -87,8 +87,8 @@ const Header: React.FC = () => {
 
     // Contact details for the "More" menu — same source the footer uses
     const { data: siteRes } = useGetSiteContentQuery(undefined);
-    const contactPhone: string = siteRes?.data?.contact?.phone || '+8809666786000';
-    const waDigits = (siteRes?.data?.contact?.whatsapp || siteRes?.data?.floating?.whatsapp || '8801961864327').replace(/\D/g, '');
+    const contactPhone: string = siteRes?.data?.contact?.phone || '01571541370';
+    const waDigits = (siteRes?.data?.contact?.whatsapp || siteRes?.data?.floating?.whatsapp || '8801571541370').replace(/\D/g, '');
     const moreHref = (l: MoreLink) => {
         if (l.dynamic === 'phone') return `tel:${contactPhone.replace(/\s+/g, '')}`;
         if (l.dynamic === 'whatsapp') return `https://wa.me/${waDigits}`;
