@@ -65,7 +65,7 @@ const OrderService = {
     },
 
     async createOrder(userId: string, payload: any) {
-        const { items, shippingAddress, paymentMethod, paymentDetails, couponCode, note } = payload;
+        const { items, shippingAddress, billingAddress, paymentMethod, paymentDetails, couponCode, note } = payload;
 
         // Get product details and calculate totals
         let subtotal = 0;
@@ -142,6 +142,8 @@ const OrderService = {
             user: userId,
             items: orderItems,
             shippingAddress,
+            // Billing defaults to a copy of shipping when not sent separately.
+            billingAddress: billingAddress || shippingAddress,
             subtotal,
             shippingCost,
             discount,

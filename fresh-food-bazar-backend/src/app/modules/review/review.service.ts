@@ -148,6 +148,27 @@ const ReviewService = {
         return review;
     },
 
+    // Admin: update a review regardless of who wrote it (moderation + admin reply).
+    // Looks up by id only — NOT by `user`, so an admin can edit guest / other
+    // users' reviews (the old user-scoped path 404'd here, breaking admin reply).
+    async adminUpdateReview(
+        id: string,
+        payload: { status?: 'pending' | 'approved' | 'rejected'; adminReply?: string; comment?: string; rating?: number; title?: string },
+    ) {
+        const review = await Review.findById(id);
+        if (!review) throw new AppError(404, 'Review not found');
+
+        if (payload.status) review.status = payload.status;
+        if (typeof payload.adminReply === 'string') (review as any).adminReply = payload.adminReply.trim();
+        if (typeof payload.comment === 'string') review.comment = payload.comment;
+        if (typeof payload.rating === 'number') review.rating = payload.rating;
+        if (typeof payload.title === 'string') review.title = payload.title;
+
+        // Re-saved (not updateOne) so the post-save hook recomputes product stats.
+        await review.save();
+        return review;
+    },
+
     // Public: increment review like count
     async likeReview(reviewId: string) {
         const review = await Review.findByIdAndUpdate(

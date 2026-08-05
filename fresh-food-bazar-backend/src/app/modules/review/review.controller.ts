@@ -25,10 +25,12 @@ const ReviewController = {
         sendResponse(res, { statusCode: 201, success: true, message: 'Comment submitted', data: review });
     }),
     update: catchAsync(async (req: Request, res: Response) => {
-        // Admins moderate any review; authors may only edit their own text
-        if (req.user!.role === 'admin' && req.body.status) {
-            const review = await ReviewService.setReviewStatus(req.params.id, req.body.status);
-            return sendResponse(res, { statusCode: 200, success: true, message: `Review ${req.body.status}`, data: review });
+        // Admins moderate / reply to ANY review (looked up by id, not ownership).
+        // Authors may only edit their own review text.
+        if (req.user!.role === 'admin') {
+            const review = await ReviewService.adminUpdateReview(req.params.id, req.body);
+            const msg = req.body.status ? `Review ${req.body.status}` : 'Review updated';
+            return sendResponse(res, { statusCode: 200, success: true, message: msg, data: review });
         }
         const review = await ReviewService.updateReview(req.params.id, req.user!.userId, req.body);
         sendResponse(res, { statusCode: 200, success: true, message: 'Review updated', data: review });

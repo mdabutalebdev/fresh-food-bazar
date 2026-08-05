@@ -29,5 +29,6 @@ export const updateReviewValidation = z.object({
         comment: z.string().max(1000).optional(),
         // Admin moderation
         status: z.enum(['pending', 'approved', 'rejected']).optional(),
+        adminReply: z.string().max(1000).optional(),
     }),
 });

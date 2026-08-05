@@ -31,6 +31,8 @@ const reviewSchema = new Schema(
         helpfulVotes: { type: Number, default: 0 },
         likes: { type: Number, default: 0 },
         replies: { type: [replySchema], default: [] },
+        // Admin's response to the review, shown in the admin panel.
+        adminReply: { type: String, default: '', maxlength: 1000 },
     },
     { timestamps: true, toJSON: { virtuals: true } }
 );

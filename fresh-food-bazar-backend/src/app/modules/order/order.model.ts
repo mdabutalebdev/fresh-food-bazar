@@ -34,6 +34,9 @@ const orderSchema = new Schema(
         user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         items: { type: [orderItemSchema], required: true },
         shippingAddress: { type: shippingAddressSchema, required: true },
+        // Billing address — falls back to a copy of the shipping address when the
+        // customer leaves "Same as shipping" ticked.
+        billingAddress: { type: shippingAddressSchema, default: undefined },
 
         // Pricing
         subtotal: { type: Number, required: true },

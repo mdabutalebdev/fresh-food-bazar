@@ -25,6 +25,7 @@ export const createOrderValidation = z.object({
     body: z.object({
         items: z.array(orderItemValidation).min(1, 'At least one item required'),
         shippingAddress: shippingAddressValidation,
+        billingAddress: shippingAddressValidation.optional(),
         paymentMethod: z.enum(['cod', 'bkash', 'rocket', 'nagad']).default('bkash'),
         paymentDetails: paymentDetailsValidation,
         couponCode: z.string().optional(),
