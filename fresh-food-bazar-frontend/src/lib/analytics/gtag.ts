@@ -47,8 +47,22 @@ export const isGaEnabled = (): boolean =>
 
 /** Low-level: send a raw GA4 event. Safe no-op when GA is disabled. */
 export function gaEvent(name: string, params: Record<string, unknown> = {}): void {
-    if (!isGaEnabled()) return;
-    window.gtag('event', name, params);
+    if (typeof window !== 'undefined') {
+        // ১. Send to Google Tag Manager via dataLayer
+        window.dataLayer = window.dataLayer || [];
+        
+        // Clear previous ecommerce object and push the new one
+        window.dataLayer.push({ ecommerce: null });
+        window.dataLayer.push({
+            event: name,
+            ecommerce: params,
+        });
+
+        // ২. Send directly to GA4 (Your existing logic)
+        if (isGaEnabled()) {
+            window.gtag('event', name, params);
+        }
+    }
 }
 
 /** Register a client-side page_view (used on route change). */
@@ -56,6 +70,10 @@ export function gaPageview(url: string): void {
     if (!isGaEnabled()) return;
     window.gtag('config', GA_MEASUREMENT_ID, { page_path: url });
 }
+
+
+
+
 
 // ── Item mappers ─────────────────────────────────────────────────
 
