@@ -45,9 +45,55 @@ export const isGaEnabled = (): boolean =>
     !!GA_MEASUREMENT_ID &&
     typeof window.gtag === 'function';
 
+function getUserDataForGtm() {
+    const defaultData = {
+        customerFirstName: '',
+        customerLastName: '',
+        customerBillingFirstName: '',
+        customerBillingLastName: '',
+        customerBillingEmail: '',
+        customerBillingPhone: '',
+        customerBillingAddress1: '',
+        customerBillingCity: '',
+        customerBillingState: '',
+        customerBillingPostcode: '',
+        customerBillingCountry: '',
+    };
+    if (typeof window === 'undefined') return defaultData;
+    try {
+        const rawUser = localStorage.getItem('freshfoodbazar_user');
+        if (rawUser) {
+            const user = JSON.parse(rawUser);
+            const nameParts = (user.name || '').split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
+            return {
+                ...defaultData,
+                customerFirstName: firstName,
+                customerLastName: lastName,
+                customerBillingFirstName: firstName,
+                customerBillingLastName: lastName,
+                customerBillingEmail: user.email || '',
+                customerBillingPhone: user.phone || '',
+                customerBillingAddress1: user.address?.street || '',
+                customerBillingCity: user.address?.city || '',
+                customerBillingState: user.address?.state || '',
+                customerBillingPostcode: user.address?.zipCode || '',
+                customerBillingCountry: user.address?.country || '',
+            };
+        }
+    } catch {
+        return defaultData;
+    }
+    return defaultData;
+}
+
 /** Low-level: send a raw GA4 event. Safe no-op when GA is disabled. */
 export function gaEvent(name: string, params: Record<string, unknown> = {}): void {
     if (typeof window !== 'undefined') {
+        const userData = getUserDataForGtm();
+        
         // ১. Send to Google Tag Manager via dataLayer
         window.dataLayer = window.dataLayer || [];
         
@@ -55,6 +101,7 @@ export function gaEvent(name: string, params: Record<string, unknown> = {}): voi
         window.dataLayer.push({ ecommerce: null });
         window.dataLayer.push({
             event: name,
+            ...userData,
             ecommerce: params,
         });
 

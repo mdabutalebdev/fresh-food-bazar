@@ -202,6 +202,17 @@ const NewHomePage: React.FC = () => {
         return cat?.name || '';
     }, [selectedCategory, categories]);
 
+    // ── GA4 & GTM Event: view_item_list on home feed load ───────────
+    useEffect(() => {
+        if (displayProducts && displayProducts.length > 0 && page === 1 && !isFetching && !imageSearch.isSearching) {
+            import('@/lib/analytics/gtag').then((gtag) => {
+                const gaItems = displayProducts.slice(0, visibleCount).map((p: any) => gtag.toGaItem(p));
+                gtag.trackViewItemList(gaItems, 'home_page_feed', 'Home Page Products');
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [displayProducts, isFetching, page, visibleCount, imageSearch.isSearching]);
+
     // No full-page loading skeleton: it replaced the hero, categories and
     // sliders with a grey grid on every visit. Each section shows its own
     // placeholder instead, so the page frame is there from the first paint.
