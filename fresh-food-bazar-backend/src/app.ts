@@ -25,6 +25,9 @@ import { SiteContentRoutes } from './app/modules/siteContent/siteContent.routes'
 
 const app: Application = express();
 
+// Trust reverse proxy (e.g. Coolify/Traefik) so req.protocol correctly reports 'https'
+app.set('trust proxy', 1);
+
 // ── Body Parsers ─────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
