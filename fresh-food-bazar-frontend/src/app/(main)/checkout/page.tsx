@@ -11,7 +11,7 @@ import {
     trackPurchase,
     type GaItem,
 } from '@/lib/analytics/gtag';
-import { loginSuccess } from '@/redux/slices/authSlice';
+import { loginSuccess, updateUser } from '@/redux/slices/authSlice';
 import { useCreateOrderMutation, useGuestCheckoutMutation } from '@/redux/api/orderApi';
 import { useValidateCouponMutation } from '@/redux/api/couponApi';
 import { useGetSiteContentQuery } from '@/redux/api/siteContentApi';
@@ -282,7 +282,18 @@ const CheckoutPage = () => {
         };
 
         try {
+            // Update local user profile with checkout address so GTM can pick it up
+            const userAddress = {
+                street: formData.address,
+                city: formData.city,
+                state: formData.area || '',
+                zipCode: formData.postalCode,
+                country: 'BD',
+            };
+
             if (isAuthenticated) {
+                dispatch(updateUser({ address: userAddress }));
+                
                 const res = await createOrder(orderPayload).unwrap();
                 dispatch(clearCart());
                 localStorage.removeItem(COUPON_STORAGE_KEY);
@@ -304,6 +315,7 @@ const CheckoutPage = () => {
                             email: userData.email,
                             phone: userData.phone || '',
                             role: userData.role || 'user',
+                            address: userAddress,
                         },
                         token: result.data.accessToken,
                     }));
