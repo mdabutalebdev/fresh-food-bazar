@@ -58,6 +58,13 @@ function getUserDataForGtm() {
         customerBillingState: '',
         customerBillingPostcode: '',
         customerBillingCountry: '',
+        customerShippingFirstName: '',
+        customerShippingLastName: '',
+        customerShippingAddress1: '',
+        customerShippingCity: '',
+        customerShippingState: '',
+        customerShippingPostcode: '',
+        customerShippingCountry: '',
     };
     if (typeof window === 'undefined') return defaultData;
     try {
@@ -81,6 +88,13 @@ function getUserDataForGtm() {
                 customerBillingState: user.address?.state || '',
                 customerBillingPostcode: user.address?.zipCode || '',
                 customerBillingCountry: user.address?.country || '',
+                customerShippingFirstName: firstName,
+                customerShippingLastName: lastName,
+                customerShippingAddress1: user.address?.street || '',
+                customerShippingCity: user.address?.city || '',
+                customerShippingState: user.address?.state || '',
+                customerShippingPostcode: user.address?.zipCode || '',
+                customerShippingCountry: user.address?.country || '',
             };
         }
     } catch {
