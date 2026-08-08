@@ -5,14 +5,17 @@ import Link from 'next/link';
 import {
     FiSearch, FiMail, FiEye, FiRefreshCw, FiUsers,
     FiUserCheck, FiUserX, FiCalendar, FiPhone,
-    FiX, FiUserPlus, FiShield, FiEdit3,
+    FiX, FiUserPlus, FiShield, FiEdit3, FiTrash2, FiCopy, FiCheckCircle,
 } from 'react-icons/fi';
 import {
     useGetAdminUsersQuery,
     useGetAdminUserStatsQuery,
     useUpdateUserMutation,
+    useDeleteUserMutation,
+    useInviteUserMutation,
 } from '@/redux/api/userApi';
 import { useRegisterMutation } from '@/redux/api/authApi';
+import { useAppSelector } from '@/redux';
 import toast from 'react-hot-toast';
 import {
     PageShell, PageHeader, Card, CardHeader, Btn, IconBtn, Badge, SearchInput,
@@ -60,6 +63,9 @@ export default function CustomersPage() {
     const [createForm, setCreateForm] = useState({
         firstName: '', lastName: '', email: '', phone: '', password: '', role: 'admin' as 'admin' | 'user',
     });
+    const [showInvite, setShowInvite] = useState(false);
+    const [inviteForm, setInviteForm] = useState({ email: '', firstName: '', lastName: '', role: 'user' as 'admin' | 'user' });
+    const [inviteResult, setInviteResult] = useState<{ inviteLink: string; emailSent: boolean } | null>(null);
 
     const { data: usersData, isLoading, isFetching, refetch: refetchUsers } = useGetAdminUsersQuery({
         page, limit: PER_PAGE,
@@ -71,6 +77,9 @@ export default function CustomersPage() {
     const { data: statsData, isLoading: isStatsLoading, refetch: refetchStats } = useGetAdminUserStatsQuery(undefined);
     const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation();
     const [registerUser, { isLoading: isCreating }] = useRegisterMutation();
+    const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+    const [inviteUser, { isLoading: isInviting }] = useInviteUserMutation();
+    const currentUser = useAppSelector((s) => s.auth.user);
 
     const customers = usersData?.data || [];
     const meta = usersData?.meta || { totalPages: 1, total: 0 };
@@ -86,6 +95,44 @@ export default function CustomersPage() {
             refetchUsers();
         } catch (err: any) {
             toast.error(err?.data?.message || 'Failed to update role');
+        }
+    };
+
+    const handleDelete = async (user: any) => {
+        // Guard against an admin deleting their own account by accident.
+        if (currentUser && String(currentUser.id) === String(user._id)) {
+            return toast.error("You can't delete your own account");
+        }
+        const label = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+        if (!window.confirm(`Delete "${label}"? This permanently removes the account and cannot be undone.`)) return;
+        try {
+            await deleteUser(user._id).unwrap();
+            toast.success('User deleted');
+            refetchUsers();
+            refetchStats();
+        } catch (err: any) {
+            toast.error(err?.data?.message || 'Failed to delete user');
+        }
+    };
+
+    const handleInvite = async () => {
+        const email = inviteForm.email.trim();
+        if (!/^\S+@\S+\.\S+$/.test(email)) return toast.error('Enter a valid email');
+        try {
+            const res = await inviteUser({
+                email,
+                role: inviteForm.role,
+                firstName: inviteForm.firstName.trim() || undefined,
+                lastName: inviteForm.lastName.trim() || undefined,
+            }).unwrap();
+            const data = res?.data || {};
+            setInviteResult({ inviteLink: data.inviteLink, emailSent: !!data.emailSent });
+            toast.success(data.emailSent ? 'Invite email sent' : 'Invite link created');
+            setInviteForm({ email: '', firstName: '', lastName: '', role: 'user' });
+            refetchUsers();
+            refetchStats();
+        } catch (err: any) {
+            toast.error(err?.data?.message || 'Failed to send invite');
         }
     };
 
@@ -132,6 +179,9 @@ export default function CustomersPage() {
                     <>
                         <Btn icon={<FiRefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />} onClick={handleRefresh}>
                             Refresh
+                        </Btn>
+                        <Btn icon={<FiMail size={15} />} onClick={() => { setShowInvite(true); setInviteResult(null); }}>
+                            Invite by Email
                         </Btn>
                         <Btn variant="primary" icon={<FiUserPlus size={15} />} onClick={() => setShowCreate(true)}>
                             Create User
@@ -251,9 +301,20 @@ export default function CustomersPage() {
                                             </span>
                                         </Td>
                                         <Td align="right">
-                                            <Link href={`/dashboard/admin/customers/${user._id}`}>
-                                                <IconBtn icon={<FiEye size={14} />} color="#3B82F6" title="View" />
-                                            </Link>
+                                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                <Link href={`/dashboard/admin/customers/${user._id}`}>
+                                                    <IconBtn icon={<FiEye size={14} />} color="#3B82F6" title="View" />
+                                                </Link>
+                                                {currentUser && String(currentUser.id) !== String(user._id) && (
+                                                    <IconBtn
+                                                        icon={<FiTrash2 size={14} />}
+                                                        color="#EF4444"
+                                                        title="Delete user"
+                                                        onClick={() => handleDelete(user)}
+                                                        disabled={isDeleting}
+                                                    />
+                                                )}
+                                            </div>
                                         </Td>
                                     </Tr>
                                 ))}
@@ -329,6 +390,91 @@ export default function CustomersPage() {
                             onChange={e => setCreateForm({ ...createForm, password: e.target.value })} placeholder="••••••" />
                     </Field>
                 </div>
+            </Modal>
+
+            {/* Invite by email */}
+            <Modal
+                open={showInvite}
+                onClose={() => { setShowInvite(false); setInviteResult(null); }}
+                title="Invite by Email"
+                footer={
+                    inviteResult ? (
+                        <Btn variant="primary" onClick={() => { setShowInvite(false); setInviteResult(null); }}>Done</Btn>
+                    ) : (
+                        <>
+                            <Btn onClick={() => setShowInvite(false)}>Cancel</Btn>
+                            <Btn variant="primary" icon={<FiMail size={14} />} onClick={handleInvite} disabled={isInviting}>
+                                {isInviting ? 'Sending…' : 'Send Invite'}
+                            </Btn>
+                        </>
+                    )
+                }
+            >
+                {inviteResult ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '10px',
+                            background: inviteResult.emailSent ? '#ecfdf5' : '#fffbeb',
+                            border: `1px solid ${inviteResult.emailSent ? '#a7f3d0' : '#fde68a'}`,
+                        }}>
+                            <FiCheckCircle size={18} color={inviteResult.emailSent ? '#059669' : '#B45309'} />
+                            <span style={{ fontSize: '13px', color: '#344054' }}>
+                                {inviteResult.emailSent
+                                    ? 'Invite email sent successfully.'
+                                    : 'Email is not configured yet — copy the link below and send it to the user.'}
+                            </span>
+                        </div>
+                        <Field label="Invite link" hint="valid for 3 days">
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <input readOnly style={{ ...inputStyle, flex: 1 }} value={inviteResult.inviteLink}
+                                    onFocus={e => e.currentTarget.select()} />
+                                <Btn icon={<FiCopy size={14} />} onClick={() => {
+                                    navigator.clipboard?.writeText(inviteResult.inviteLink);
+                                    toast.success('Link copied');
+                                }}>Copy</Btn>
+                            </div>
+                        </Field>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            {(['admin', 'user'] as const).map(r => {
+                                const on = inviteForm.role === r;
+                                return (
+                                    <button key={r} type="button" onClick={() => setInviteForm({ ...inviteForm, role: r })}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                            padding: '11px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                                            background: on ? 'var(--color-primary)' : '#fff',
+                                            color: on ? 'var(--color-primary-foreground)' : T.body,
+                                            border: `1px solid ${on ? 'transparent' : '#e4e7ec'}`,
+                                        }}
+                                    >
+                                        {r === 'admin' ? <FiShield size={15} /> : <FiUsers size={15} />}
+                                        {r === 'admin' ? 'Admin' : 'User'}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <p style={{ fontSize: '12.5px', color: T.faint, margin: 0 }}>
+                            We&apos;ll email an invite link where they set their own password and join.
+                        </p>
+                        <Field label="Email">
+                            <input type="email" style={inputStyle} value={inviteForm.email}
+                                onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} placeholder="name@example.com" />
+                        </Field>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <Field label="First name" hint="optional">
+                                <input style={inputStyle} value={inviteForm.firstName}
+                                    onChange={e => setInviteForm({ ...inviteForm, firstName: e.target.value })} placeholder="First name" />
+                            </Field>
+                            <Field label="Last name" hint="optional">
+                                <input style={inputStyle} value={inviteForm.lastName}
+                                    onChange={e => setInviteForm({ ...inviteForm, lastName: e.target.value })} placeholder="Last name" />
+                            </Field>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </PageShell>
     );

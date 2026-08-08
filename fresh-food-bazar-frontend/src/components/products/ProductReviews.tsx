@@ -41,6 +41,7 @@ const ProductReviews: React.FC<{ productId: string; embedded?: boolean; part?: '
     const [comment, setComment] = useState('');
     const [rating, setRating] = useState('');
     const [userName, setUserName] = useState('');
+    const [profession, setProfession] = useState('');
     const [images, setImages] = useState<string[]>([]);
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
@@ -84,9 +85,10 @@ const ProductReviews: React.FC<{ productId: string; embedded?: boolean; part?: '
                 rating: Number(rating),
                 comment: comment.trim(),
                 userName: userName.trim() || 'Anonymous',
+                profession: profession.trim(),
                 images,
             }).unwrap();
-            setComment(''); setRating(''); setUserName(''); setImages([]);
+            setComment(''); setRating(''); setUserName(''); setProfession(''); setImages([]);
             toast.success('Thanks! Your review is awaiting approval.');
         } catch (err: any) {
             toast.error(err?.data?.message || 'Could not submit your review');
@@ -240,6 +242,15 @@ const ProductReviews: React.FC<{ productId: string; embedded?: boolean; part?: '
                                     className="w-[220px] border border-gray-300 rounded px-3 py-2.5 text-[14px] text-gray-700 outline-none focus:border-[var(--filter-accent)]"
                                 />
                             </div>
+                            <div>
+                                <label className="block text-[14px] mb-1.5" style={{ color: TEXT }}>Profession <span className="text-gray-400">(optional)</span>:</label>
+                                <input
+                                    value={profession}
+                                    onChange={e => setProfession(e.target.value)}
+                                    placeholder="e.g. Student, Doctor"
+                                    className="w-[220px] border border-gray-300 rounded px-3 py-2.5 text-[14px] text-gray-700 outline-none focus:border-[var(--filter-accent)]"
+                                />
+                            </div>
                         </div>
 
                         <button
@@ -280,6 +291,9 @@ const ProductReviews: React.FC<{ productId: string; embedded?: boolean; part?: '
                                     <span className="text-[16px] font-bold" style={{ color: ACCENT }}>
                                         {r.userName || [r.user?.firstName, r.user?.lastName].filter(Boolean).join(' ') || 'Anonymous'}
                                     </span>
+                                    {r.profession && (
+                                        <span className="text-[12px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{r.profession}</span>
+                                    )}
                                     <span className="text-[13px] text-gray-500">{formatDate(r.createdAt)}</span>
                                 </div>
                                 <div className="mt-1"><Stars value={r.rating} size={13} /></div>

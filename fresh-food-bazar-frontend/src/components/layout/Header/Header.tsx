@@ -203,7 +203,12 @@ const Header: React.FC = () => {
                         <Link
                             href="/"
                             className="shrink-0 max-md:absolute max-md:left-1/2 max-md:-translate-x-1/2"
-                            onClick={() => dispatch(clearImageSearch())}
+                            onClick={() => {
+                                dispatch(clearImageSearch());
+                                // Already on home → <Link> won't navigate, so scroll to
+                                // the top (banner in view) manually.
+                                if (pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
                         >
                             <HeaderLogo />
                         </Link>
@@ -239,7 +244,7 @@ const Header: React.FC = () => {
                                         </span>
                                     </button>
                                     {isProfileOpen && (
-                                        <div className="absolute right-0 top-full mt-3 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+                                        <div className="absolute right-0 top-full mt-3 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[60]">
                                             <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
                                                 <p className="text-sm font-bold text-gray-800 truncate">{user.name || 'User'}</p>
                                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>

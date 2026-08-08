@@ -8,11 +8,12 @@ import {
     FiGrid, FiLogOut, FiMenu, FiX, FiChevronDown,
     FiShoppingCart, FiUser, FiChevronLeft,
     FiLayout, FiBarChart2, FiTag, FiStar, FiTrendingUp,
-    FiBell, FiSearch, FiCreditCard,
+    FiSearch, FiCreditCard,
 } from 'react-icons/fi';
 import BrandLogo from '@/components/shared/BrandLogo';
+import AdminNotifications from './AdminNotifications';
 import { useTheme } from '@/components/shared/ThemeProvider';
-import { useAppDispatch } from '@/redux';
+import { useAppDispatch, useAppSelector } from '@/redux';
 import { logout } from '@/redux/slices/authSlice';
 
 interface AdminLayoutProps { children: React.ReactNode; }
@@ -76,6 +77,7 @@ const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ children }) => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const dispatch = useAppDispatch();
+    const { user } = useAppSelector((s) => s.auth);
     const { logoUrl } = useTheme();
 
     // Some sub menus differ only by ?tab=…, so matching needs the query too
@@ -290,20 +292,7 @@ const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ children }) => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button style={{
-                            position: 'relative', background: 'none', border: 'none',
-                            cursor: 'pointer', color: '#667085', padding: '8px', borderRadius: '9px',
-                        }}
-                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f4f5f7'}
-                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                        >
-                            <FiBell size={18} />
-                            <span style={{
-                                position: 'absolute', top: '5px', right: '5px',
-                                width: '7px', height: '7px', borderRadius: '50%',
-                                background: '#f04438', border: '2px solid #fff',
-                            }} />
-                        </button>
+                        <AdminNotifications />
 
                         <div style={{ width: '1px', height: '22px', background: '#eceff2' }} />
 
@@ -318,15 +307,24 @@ const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ children }) => {
                             <FiChevronLeft size={14} /> View Store
                         </Link>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '9px', paddingLeft: '4px' }}>
+                        <Link href="/dashboard/admin/profile" style={{ display: 'flex', alignItems: 'center', gap: '9px', paddingLeft: '4px', textDecoration: 'none' }}>
                             <div style={{
-                                width: '34px', height: '34px', borderRadius: '50%',
+                                width: '34px', height: '34px', borderRadius: '50%', overflow: 'hidden',
                                 background: 'linear-gradient(135deg, var(--color-primary), #1a6b3c)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '13px', fontWeight: 700, color: '#fff',
-                            }}>A</div>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#344054' }} className="hidden sm:inline">Admin</span>
-                        </div>
+                                fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0,
+                            }}>
+                                {user?.avatar ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    (user?.name?.[0] || 'A').toUpperCase()
+                                )}
+                            </div>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#344054' }} className="hidden sm:inline">
+                                {user?.name || 'Admin'}
+                            </span>
+                        </Link>
                     </div>
                 </header>
 

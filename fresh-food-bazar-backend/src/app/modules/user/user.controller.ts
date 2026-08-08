@@ -94,6 +94,21 @@ const UserController = {
         await UserService.deleteUser(req.params.id);
         sendResponse(res, { statusCode: 200, success: true, message: 'User deleted successfully' });
     }),
+
+    // POST /api/users/admin/invite (admin) — invite a user/admin by email
+    inviteUser: catchAsync(async (req: Request, res: Response) => {
+        const inviter = (req as any).user;
+        const inviterName = inviter ? [inviter.firstName, inviter.lastName].filter(Boolean).join(' ') : undefined;
+        const result = await UserService.inviteUser({ ...req.body, inviterName });
+        sendResponse(res, {
+            statusCode: 201,
+            success: true,
+            message: result.emailSent
+                ? 'Invite email sent'
+                : 'Invite created — email is not configured, share the link manually',
+            data: result,
+        });
+    }),
 };
 
 export default UserController;

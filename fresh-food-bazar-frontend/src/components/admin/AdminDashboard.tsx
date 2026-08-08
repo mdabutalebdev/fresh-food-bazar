@@ -1,7 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import {
     FiShoppingBag, FiShoppingCart, FiUsers, FiDollarSign,
     FiArrowRight, FiRefreshCw, FiPackage, FiTrendingUp,
@@ -44,7 +45,27 @@ const AdminDashboard: React.FC = () => {
     const { data: orderStatsData } = useGetOrderStatsQuery(undefined);
     const { data: reviewsData } = useGetAllReviewsQuery({ limit: 1, status: 'pending' });
 
-    const handleRefresh = () => { refetchSummary(); refetchOrders(); refetchMonthly(); };
+    // RTK Query's `isLoading` is only true on the very first fetch, so the old
+    // spinner never moved on a manual refresh. Track our own `refreshing` flag and
+    // hold it for at least ~700ms so the click always feels responsive ("alive").
+    const [refreshing, setRefreshing] = useState(false);
+    const handleRefresh = async () => {
+        if (refreshing) return;
+        setRefreshing(true);
+        try {
+            await Promise.all([
+                refetchSummary(),
+                refetchOrders(),
+                refetchMonthly(),
+                new Promise((r) => setTimeout(r, 700)),
+            ]);
+            toast.success('Dashboard refreshed');
+        } catch {
+            toast.error('Could not refresh. Please try again.');
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const stats = summaryData?.data || null;
     const recentOrders = ordersData?.data || [];
@@ -145,15 +166,17 @@ const AdminDashboard: React.FC = () => {
                 </div>
                 <button
                     onClick={handleRefresh}
+                    disabled={refreshing}
                     style={{
                         display: 'flex', alignItems: 'center', gap: '7px',
                         padding: '9px 16px', background: '#fff', border: '1px solid #e4e7ec',
                         borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#344054',
-                        cursor: 'pointer',
+                        cursor: refreshing ? 'wait' : 'pointer', opacity: refreshing ? 0.7 : 1,
+                        transition: 'opacity .2s',
                     }}
                 >
-                    <FiRefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-                    Refresh
+                    <FiRefreshCw size={14} className={refreshing || isLoading ? 'animate-spin' : ''} />
+                    {refreshing ? 'Refreshing…' : 'Refresh'}
                 </button>
             </div>
 

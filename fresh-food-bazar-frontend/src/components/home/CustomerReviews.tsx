@@ -167,12 +167,17 @@ const CustomerReviews: React.FC = () => {
                                         <div className="mt-auto">
                                             <Stars value={r.rating} />
                                             <div className="flex items-center gap-3.5 mt-4">
-                                                <Avatar name={name} src={r.user?.avatar} />
+                                                {/* Photo is optional: a customer-uploaded review image is used
+                                                    when present, otherwise the logged-in user's avatar, else initials. */}
+                                                <Avatar name={name} src={r.user?.avatar || r.images?.[0]} />
                                                 <div className="min-w-0">
                                                     <p className="text-[16px] font-semibold text-[#222831] truncate">{name}</p>
-                                                    <p className="text-[13px] text-[#8a8a8a] truncate">
-                                                        {r.product?.name || 'Verified Customer'}
-                                                    </p>
+                                                    {r.profession && (
+                                                        <p className="text-[13px] text-[#8a8a8a] truncate">{r.profession}</p>
+                                                    )}
+                                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold mt-1 px-2 py-0.5 rounded-full" style={{ color: '#059669', background: '#ecfdf5' }}>
+                                                        ✓ Verified Customer
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>

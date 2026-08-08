@@ -146,9 +146,10 @@ const CouponModal = ({
                 discountType: editingCoupon.discountType || 'percentage',
                 discountValue: editingCoupon.discountValue || 0,
                 maxDiscount: editingCoupon.maxDiscount || 0,
-                minPurchase: editingCoupon.minPurchase || 0,
+                // Backend stores minOrderAmount + a single expiresAt date.
+                minPurchase: editingCoupon.minOrderAmount ?? editingCoupon.minPurchase ?? 0,
                 startDate: editingCoupon.startDate ? formatDate(editingCoupon.startDate) : formatDate(new Date()),
-                endDate: editingCoupon.endDate ? formatDate(editingCoupon.endDate) : formatDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+                endDate: editingCoupon.expiresAt ? formatDate(editingCoupon.expiresAt) : editingCoupon.endDate ? formatDate(editingCoupon.endDate) : formatDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
                 usageLimit: editingCoupon.usageLimit || 0,
                 usagePerUser: editingCoupon.usagePerUser || 1,
                 applicableTo: editingCoupon.applicableTo || 'all',
@@ -441,12 +442,36 @@ export default function CouponsPage() {
     };
 
     const handleSubmit = async (data: any) => {
+        // The form collects minPurchase + startDate/endDate, but the backend coupon
+        // model expects `minOrderAmount` and a single required `expiresAt`. Without
+        // this mapping the API rejected every create with a "Validation Error"
+        // (expiresAt was never sent). Map the fields to the shape the API wants.
+        const code = String(data.code || '').trim().toUpperCase();
+        if (!code) { toast.error('Coupon code is required'); return; }
+        if (!data.endDate) { toast.error('Please set an end date'); return; }
+        if (!(Number(data.discountValue) > 0)) { toast.error('Discount value must be greater than 0'); return; }
+
+        const payload: Record<string, unknown> = {
+            code,
+            description: data.description || '',
+            discountType: data.discountType,
+            discountValue: Number(data.discountValue) || 0,
+            minOrderAmount: Number(data.minPurchase) || 0,
+            expiresAt: data.endDate,
+            isActive: !!data.isActive,
+        };
+        // maxDiscount only applies to percentage coupons; usageLimit 0 = unlimited.
+        if (data.discountType === 'percentage' && Number(data.maxDiscount) > 0) {
+            payload.maxDiscount = Number(data.maxDiscount);
+        }
+        if (Number(data.usageLimit) > 0) payload.usageLimit = Number(data.usageLimit);
+
         try {
             if (editingCoupon) {
-                await updateCoupon({ id: editingCoupon._id, ...data }).unwrap();
+                await updateCoupon({ id: editingCoupon._id, ...payload }).unwrap();
                 toast.success('Coupon updated');
             } else {
-                await createCoupon(data).unwrap();
+                await createCoupon(payload).unwrap();
                 toast.success('Coupon created');
             }
             setIsModalOpen(false);
@@ -457,8 +482,8 @@ export default function CouponsPage() {
 
     const coupons = couponsData?.data || [];
     const filteredCoupons = coupons.filter((c: any) =>
-        c.code.toLowerCase().includes(search.toLowerCase()) ||
-        c.name.toLowerCase().includes(search.toLowerCase())
+        (c.code || '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.description || '').toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -534,7 +559,7 @@ export default function CouponsPage() {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-gray-800 uppercase tracking-wide">{coupon.code}</p>
-                                                    <p className="text-xs text-gray-500">{coupon.name}</p>
+                                                    <p className="text-xs text-gray-500">{coupon.description}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -543,26 +568,26 @@ export default function CouponsPage() {
                                                 <span className="text-sm font-bold text-emerald-600 flex items-center gap-1">
                                                     {coupon.discountType === 'percentage' ? <><FiPercent size={14} /> {coupon.discountValue}%</> : <>৳{coupon.discountValue}</>}
                                                 </span>
-                                                <span className="text-[10px] text-gray-400 mt-0.5">Min. Order: ৳{coupon.minPurchase}</span>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Min. Order: ৳{coupon.minOrderAmount ?? 0}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
                                                 <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1.5">
-                                                    {coupon.applicableTo === 'all' && <><FiPackage className="text-blue-500" size={12} /> All Products</>}
-                                                    {coupon.applicableTo === 'specific_products' && <><FiTag className="text-amber-500" size={12} /> Specific Products ({coupon.specificProducts?.length || 0})</>}
-                                                    {coupon.applicableTo === 'specific_categories' && <><FiLayers className="text-purple-500" size={12} /> Specific Categories ({coupon.specificCategories?.length || 0})</>}
+                                                    {coupon.applicableTo === 'specific_products' ? <><FiTag className="text-amber-500" size={12} /> Specific Products ({coupon.specificProducts?.length || 0})</>
+                                                        : coupon.applicableTo === 'specific_categories' ? <><FiLayers className="text-purple-500" size={12} /> Specific Categories ({coupon.specificCategories?.length || 0})</>
+                                                            : <><FiPackage className="text-blue-500" size={12} /> All Products</>}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col text-xs text-gray-600 gap-1">
-                                                <p className="flex items-center gap-1.5 font-medium leading-none"><FiCalendar size={12} className="text-gray-400" /> {displayDate(coupon.endDate)}</p>
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase w-fit mt-1 ${coupon.isActive && new Date(coupon.endDate) > new Date()
+                                                <p className="flex items-center gap-1.5 font-medium leading-none"><FiCalendar size={12} className="text-gray-400" /> {displayDate(coupon.expiresAt)}</p>
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase w-fit mt-1 ${coupon.isActive && new Date(coupon.expiresAt) > new Date()
                                                         ? 'bg-green-50 text-green-700'
                                                         : 'bg-red-50 text-red-700'
                                                     }`}>
-                                                    {coupon.isActive && new Date(coupon.endDate) > new Date() ? 'Active' : 'Expired'}
+                                                    {coupon.isActive && new Date(coupon.expiresAt) > new Date() ? 'Active' : 'Expired'}
                                                 </span>
                                             </div>
                                         </td>

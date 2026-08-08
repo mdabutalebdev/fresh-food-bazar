@@ -84,13 +84,14 @@ const ReviewService = {
     // Public (guest) review — no login required. Post-save hook on Review model
     // keeps product.reviewCount / commentCount / rating in sync.
     async publicCreateReview(payload: any) {
-        const { product, rating, comment, userName, images } = payload;
+        const { product, rating, comment, userName, images, profession } = payload;
         return await Review.create({
             product,
             rating,
             comment,
             images: Array.isArray(images) ? images.slice(0, 3) : [],
             userName: userName?.trim() || 'Anonymous',
+            profession: profession?.trim() || '',
             user: null,
             status: 'pending', // an admin has to approve it before it shows
         });

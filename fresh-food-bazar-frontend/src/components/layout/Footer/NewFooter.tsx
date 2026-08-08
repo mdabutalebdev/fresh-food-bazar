@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux';
 import { logout } from '@/redux/slices/authSlice';
 import { FiMapPin, FiMail, FiPhone } from 'react-icons/fi';
@@ -34,7 +34,15 @@ const NewFooter: React.FC = () => {
     const { isAuthenticated, user } = useAppSelector((state) => state.auth);
     const dispatch = useAppDispatch();
     const router = useRouter();
+    const pathname = usePathname();
     const { logoUrl } = useTheme();
+
+    // Clicking the logo / "Home" link should always land at the very top with the
+    // banner in view. Cross-page navigation already scrolls to top; when we're
+    // already on the home page a normal <Link> does nothing, so scroll manually.
+    const goHomeTop = () => {
+        if (pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
     const { data: siteRes } = useGetSiteContentQuery(undefined);
 
     // Social links from DB (admin → site-content). Only show ones with a real URL.
@@ -68,7 +76,7 @@ const NewFooter: React.FC = () => {
 
                     {/* Brand + Address + Social */}
                     <div className="sm:col-span-2 lg:col-span-1">
-                        <Link href="/" className="inline-flex items-center mb-4">
+                        <Link href="/" onClick={goHomeTop} className="inline-flex items-center mb-4">
                             {/* This column's content is ~122px against a 165px row, so
                                 a 56px logo still doesn't grow the footer. */}
                             <BrandLogo src={logoUrl} alt="Fresh Food Bazar" className="h-14 w-auto object-contain" />
@@ -111,7 +119,7 @@ const NewFooter: React.FC = () => {
                     <div>
                         <h4 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Quick Links</h4>
                         <ul className="space-y-2.5">
-                            <li><Link href="/" className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">Home</Link></li>
+                            <li><Link href="/" onClick={goHomeTop} className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">Home</Link></li>
                             <li><Link href="/products" className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">All Products</Link></li>
                             <li><Link href="/contact" className="text-sm text-gray-500 hover:text-[var(--color-text-primary)] transition-colors">Contact Us</Link></li>
                         </ul>
@@ -161,13 +169,23 @@ const NewFooter: React.FC = () => {
                     <div className="flex flex-col md:flex-row items-center justify-between gap-2">
                         <p className="text-xs text-gray-400">
                             Copyright © {new Date().getFullYear()} Fresh Food Bazar
+                            <span className="mx-1.5 text-gray-300">·</span>
+                            Created By{' '}
+                            <a
+                                href="https://www.extrainweb.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-semibold text-[var(--color-text-primary)] hover:underline"
+                            >
+                                Extrain Web
+                            </a>
                         </p>
                         <div className="flex items-center gap-4">
-                            <Link href="/terms" className="text-xs text-gray-400 hover:text-[var(--color-text-primary)] transition-colors">Terms & Conditions</Link>
+                            <Link href="/terms" className="text-xs text-gray-400 hover:text-[var(--color-text-primary)] transition-colors whitespace-nowrap">Terms &amp; Conditions</Link>
                             <span className="text-gray-300">•</span>
-                            <Link href="/privacy" className="text-xs text-gray-400 hover:text-[var(--color-text-primary)] transition-colors">Privacy Policy</Link>
+                            <Link href="/privacy" className="text-xs text-gray-400 hover:text-[var(--color-text-primary)] transition-colors whitespace-nowrap">Privacy Policy</Link>
                             <span className="text-gray-300">•</span>
-                            <Link href="/refund" className="text-xs text-gray-400 hover:text-[var(--color-text-primary)] transition-colors">Refund Policy</Link>
+                            <Link href="/refund" className="text-xs text-gray-400 hover:text-[var(--color-text-primary)] transition-colors whitespace-nowrap">Return Policy</Link>
                         </div>
                     </div>
                 </div>

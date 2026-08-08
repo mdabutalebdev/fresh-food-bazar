@@ -14,6 +14,8 @@ const reviewSchema = new Schema(
         product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
         user: { type: Schema.Types.ObjectId, ref: 'User', default: null },
         userName: { type: String, maxlength: 50, default: 'Anonymous' },
+        // Optional profession shown under the name on the storefront (e.g. Student, Doctor)
+        profession: { type: String, maxlength: 60, default: '' },
         rating: { type: Number, required: true, min: 1, max: 5 },
         title: { type: String, maxlength: 100, default: '' },
         comment: { type: String, required: true, maxlength: 1000 },

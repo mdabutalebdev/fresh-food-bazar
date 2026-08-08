@@ -8,6 +8,7 @@ export const createReviewValidation = z.object({
         comment: z.string().min(1, 'Comment is required').max(1000),
         images: z.array(z.string()).optional(),
         userName: z.string().max(50).optional(),
+        profession: z.string().max(60).optional(),
     }),
 });
 
@@ -19,6 +20,7 @@ export const publicCreateReviewValidation = z.object({
         comment: z.string().min(1, 'Comment is required').max(1000),
         userName: z.string().max(50).optional(),
         images: z.array(z.string()).max(3).optional(),
+        profession: z.string().max(60).optional(),
     }),
 });
 

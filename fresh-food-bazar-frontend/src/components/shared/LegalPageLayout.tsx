@@ -13,9 +13,13 @@ interface LegalPageProps {
     ctaTitle: string;
     ctaDescription: string;
     ctaButtonText: string;
+    /* Content max-width. Legal pages (terms/privacy/refund) stay narrow for
+       readability; marketing pages like About pass a wider value to fill the
+       container like the rest of the site. */
+    maxWidth?: string;
 }
 
-const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, ctaDescription, ctaButtonText }: LegalPageProps) => {
+const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, ctaDescription, ctaButtonText, maxWidth = '1120px' }: LegalPageProps) => {
     const { data: response, isLoading } = useGetLegalPageQuery(slug);
     const page = response?.data;
 
@@ -38,7 +42,7 @@ const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, cta
         <div className="bg-[var(--color-background)] min-h-screen">
             {/* ══ HERO HEADER ══ */}
             <div style={{ background: 'linear-gradient(180deg, #fff 0%, #f8f9fb 100%)', borderBottom: '1px solid #eef0f3' }}>
-                <div style={{ maxWidth: '1120px', margin: '0 auto', padding: '48px 24px 44px', textAlign: 'center' }}>
+                <div style={{ maxWidth, margin: '0 auto', padding: '48px 24px 44px', textAlign: 'center' }}>
                     {/* Breadcrumb */}
                     <Link
                         href="/"
@@ -69,7 +73,7 @@ const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, cta
             </div>
 
             {/* ══ CONTENT ══ */}
-            <div style={{ maxWidth: '1120px', margin: '0 auto', padding: '40px 24px 60px' }}>
+            <div style={{ maxWidth, margin: '0 auto', padding: '40px 24px 60px' }}>
                 <div
                     style={{ background: '#fff', borderRadius: '14px', border: '1px solid #eef0f3', padding: '36px 40px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}
                 >

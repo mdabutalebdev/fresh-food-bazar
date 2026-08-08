@@ -1,8 +1,11 @@
+import crypto from 'crypto';
 import { User } from './user.model';
 import { Product } from '../product/product.model';
 import { Order } from '../order/order.model';
 import AppError from '../../utils/AppError';
 import QueryBuilder from '../../utils/QueryBuilder';
+import config from '../../config';
+import { sendEmail } from '../../utils/sendEmail';
 
 const UserService = {
     // Get all users (admin)
@@ -197,6 +200,70 @@ const UserService = {
         const user = await User.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
         if (!user) throw new AppError(404, 'User not found');
         return user;
+    },
+
+    // Invite a new user/admin by email. Creates a "pending" account with a
+    // password-reset token and emails an invite link where they set their own
+    // password. If SMTP isn't configured the link is still returned so the admin
+    // can copy and share it manually.
+    async inviteUser(payload: { email: string; role?: 'admin' | 'user'; firstName?: string; lastName?: string; inviterName?: string }) {
+        const email = payload.email.trim().toLowerCase();
+
+        const existing = await User.findOne({ email });
+        if (existing) {
+            if (existing.isDeleted) {
+                throw new AppError(400, 'An account with this email was removed. Restore it instead of re-inviting.');
+            }
+            throw new AppError(400, 'A user with this email already exists');
+        }
+
+        // Raw token goes in the link; only its hash is stored (same scheme as reset-password).
+        const rawToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+        // Placeholder password — never used; the invitee sets their own via the link.
+        const tempPassword = crypto.randomBytes(16).toString('hex');
+
+        const firstName = payload.firstName?.trim() || email.split('@')[0] || 'New';
+        const lastName = payload.lastName?.trim() || 'Member';
+
+        const user = await User.create({
+            email,
+            firstName,
+            lastName,
+            password: tempPassword,
+            role: payload.role === 'admin' ? 'admin' : 'user',
+            status: 'pending',
+            passwordResetToken: hashedToken,
+            passwordResetExpires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
+        });
+
+        const inviteLink = `${config.frontend_url}/accept-invite?token=${rawToken}`;
+        const roleLabel = user.role === 'admin' ? 'an Admin' : 'a Member';
+
+        const html = `
+            <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#222">
+                <h2 style="color:#0C2E20;margin:0 0 8px">Fresh Food Bazar</h2>
+                <p style="font-size:15px;line-height:1.6">
+                    You have been invited to join <b>Fresh Food Bazar</b> as ${roleLabel}${payload.inviterName ? ` by ${payload.inviterName}` : ''}.
+                </p>
+                <p style="font-size:15px;line-height:1.6">Click the button below to set your password and activate your account. This link is valid for 3 days.</p>
+                <p style="text-align:center;margin:28px 0">
+                    <a href="${inviteLink}" style="background:#F47B20;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;display:inline-block">Accept Invite</a>
+                </p>
+                <p style="font-size:13px;color:#666">Or paste this link into your browser:<br><a href="${inviteLink}">${inviteLink}</a></p>
+            </div>`;
+
+        const emailSent = await sendEmail({
+            to: email,
+            subject: "You're invited to Fresh Food Bazar",
+            html,
+        });
+
+        return {
+            emailSent,
+            inviteLink,
+            user: { _id: user._id, email: user.email, role: user.role, status: user.status },
+        };
     },
 };
 

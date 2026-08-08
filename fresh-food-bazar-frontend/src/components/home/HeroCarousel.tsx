@@ -84,6 +84,12 @@ const HeroCarousel: React.FC<{ slides: HeroSlide[]; className?: string }> = ({ s
             <img
                 src={slide.imageUrl || '/images/hero%20banar01.png'}
                 alt="Fresh Food Bazar"
+                /* The visible slide is above the fold — load it eagerly and with
+                   high priority so the banner paints fast instead of popping in
+                   late. Off-screen slides stay lazy. */
+                loading={isActive ? 'eager' : 'lazy'}
+                fetchPriority={isActive ? 'high' : 'auto'}
+                decoding="async"
                 className="w-full h-full object-cover"
             />
         );

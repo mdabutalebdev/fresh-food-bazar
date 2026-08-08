@@ -22,7 +22,7 @@ const HeroSection: React.FC = () => {
     // `undefined` (not `{}`) so this shares one cache entry with the header and
     // the home sliders, and refetch-on-mount so a banner saved in the admin shows
     // up on the next page load instead of serving a stale cached response.
-    const { data: res } = useGetSiteContentQuery(undefined, { refetchOnMountOrArgChange: true });
+    const { data: res, isLoading } = useGetSiteContentQuery(undefined, { refetchOnMountOrArgChange: true });
 
     // Main carousel slides — admin-uploaded only, no default fallback.
     const slides: HeroSlide[] = res?.data?.heroSlides?.filter((s: HeroSlide) => s.active !== false) || [];
@@ -41,6 +41,23 @@ const HeroSection: React.FC = () => {
             : [];
 
     const showSide = sideBanners.length > 0;
+
+    // On a hard refresh the site-content query starts empty, so without this the
+    // whole hero returns null for a moment and everything below jumps up — then
+    // jumps back down when the banner arrives. Reserve the banner's exact height
+    // with a skeleton while loading so the layout stays put (no flicker / CLS).
+    if (isLoading) {
+        return (
+            <section className="w-full">
+                <div className="mx-auto max-w-[1500px] px-4 lg:px-8 py-4 lg:py-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-[18px]">
+                        <div className={`lg:col-span-2 rounded-lg bg-gray-100 animate-pulse ${PANEL_HEIGHT}`} />
+                        <div className={`hidden lg:block lg:col-span-1 rounded-lg bg-gray-100 animate-pulse ${PANEL_HEIGHT}`} />
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     // Nothing uploaded yet → keep the hero area empty (client request: no default banner).
     if (slides.length === 0 && !showSide) return null;

@@ -227,7 +227,12 @@ export default function ReviewsPage() {
                                                             <Image src={review.user.avatar} alt="User" width={24} height={24} className="rounded-full" />
                                                         ) : <FiUser size={12} className="text-gray-400" />}
                                                     </div>
-                                                    <span className="text-xs font-bold text-gray-700">{review.user?.firstName} {review.user?.lastName}</span>
+                                                    <span className="text-xs font-bold text-gray-700">
+                                                        {[review.user?.firstName, review.user?.lastName].filter(Boolean).join(' ') || review.userName || 'Anonymous'}
+                                                    </span>
+                                                    {review.profession && (
+                                                        <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-1.5 py-0.5">{review.profession}</span>
+                                                    )}
                                                 </div>
                                                 <div className="flex gap-0.5">
                                                     {[...Array(5)].map((_, i) => (

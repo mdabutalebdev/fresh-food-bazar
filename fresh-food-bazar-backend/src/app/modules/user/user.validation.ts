@@ -9,6 +9,15 @@ export const updateUserValidation = z.object({
     }),
 });
 
+export const inviteUserValidation = z.object({
+    body: z.object({
+        email: z.string().email('A valid email is required'),
+        role: z.enum(['admin', 'user']).optional(),
+        firstName: z.string().max(50).optional(),
+        lastName: z.string().max(50).optional(),
+    }),
+});
+
 export const addAddressValidation = z.object({
     body: z.object({
         label: z.string().default('Home'),

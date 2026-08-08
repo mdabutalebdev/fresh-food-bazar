@@ -114,6 +114,7 @@ export const orderApi = baseApi.injectEndpoints({
 export const {
     // Admin hooks
     useGetAdminOrdersQuery,
+    useLazyGetAdminOrdersQuery,
     useGetOrderStatsQuery,
     useGetAdminOrderByIdQuery,
     useUpdateOrderStatusMutation,

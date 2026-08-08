@@ -2,7 +2,7 @@ import express from 'express';
 import UserController from './user.controller';
 import { authMiddleware, authorizeRoles } from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
-import { updateUserValidation, addAddressValidation, updateAddressValidation, updateStatusValidation } from './user.validation';
+import { updateUserValidation, addAddressValidation, updateAddressValidation, updateStatusValidation, inviteUserValidation } from './user.validation';
 
 const router = express.Router();
 
@@ -23,6 +23,7 @@ router.post('/wishlist/:productId', authMiddleware, UserController.toggleWishlis
 
 // ── Admin Routes ────────────────────────────────────────
 router.get('/admin/all', authMiddleware, authorizeRoles('admin'), UserController.getAllUsers);
+router.post('/admin/invite', authMiddleware, authorizeRoles('admin'), validateRequest(inviteUserValidation), UserController.inviteUser);
 router.get('/admin/stats', authMiddleware, authorizeRoles('admin'), UserController.getAdminStats);
 router.get('/admin/:id', authMiddleware, authorizeRoles('admin'), UserController.getUserById);
 router.patch('/admin/:id', authMiddleware, authorizeRoles('admin'), UserController.adminUpdateUser);

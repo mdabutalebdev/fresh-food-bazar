@@ -102,6 +102,14 @@ export const userApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['Users'],
         }),
+        inviteUser: builder.mutation({
+            query: (data) => ({
+                url: '/users/admin/invite',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['Users'],
+        }),
     }),
 });
 
@@ -121,5 +129,6 @@ export const {
     useGetAdminUserStatsQuery,
     useUpdateUserMutation,
     useDeleteUserMutation,
+    useInviteUserMutation,
 } = userApi;
 

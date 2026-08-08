@@ -6,8 +6,9 @@ import {
     FiCheckCircle, FiClock, FiXCircle, FiFilter,
     FiTrendingUp, FiArrowUp, FiDownload,
 } from 'react-icons/fi';
-import { useGetAdminOrdersQuery } from '@/redux/api/orderApi';
+import { useGetAdminOrdersQuery, useLazyGetAdminOrdersQuery } from '@/redux/api/orderApi';
 import { useGetDashboardSummaryQuery } from '@/redux/api/dashboardApi';
+import { toast } from 'react-hot-toast';
 
 export default function PaymentsPage() {
     const [page, setPage] = useState(1);
@@ -22,6 +23,55 @@ export default function PaymentsPage() {
     });
 
     const { data: summaryData } = useGetDashboardSummaryQuery(undefined);
+
+    // Export pulls every matching payment (not just the current page) and builds a
+    // CSV the admin can open in Excel / Sheets.
+    const [fetchAllForExport, { isFetching: exporting }] = useLazyGetAdminOrdersQuery();
+
+    const csvCell = (v: unknown) => {
+        const s = String(v ?? '');
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
+    const handleExport = async () => {
+        try {
+            const res = await fetchAllForExport({
+                page: 1,
+                limit: 10000,
+                paymentStatus: paymentFilter || undefined,
+                searchTerm: search || undefined,
+            }).unwrap();
+            const rows: any[] = res?.data || [];
+            if (rows.length === 0) { toast.error('No payments to export'); return; }
+
+            const header = ['Order Number', 'Customer', 'Email', 'Method', 'Amount', 'Payment Status', 'Order Status', 'Date'];
+            const body = rows.map((o) => [
+                o.orderNumber || '',
+                (o.user?.firstName ? `${o.user.firstName} ${o.user.lastName || ''}` : o.guestInfo?.name || 'Guest').trim(),
+                o.user?.email || o.guestInfo?.email || '',
+                o.paymentMethod || 'COD',
+                o.total ?? 0,
+                o.paymentStatus || 'pending',
+                o.status || '',
+                o.createdAt ? new Date(o.createdAt).toLocaleString('en-US') : '',
+            ]);
+            const csv = [header, ...body].map((r) => r.map(csvCell).join(',')).join('\n');
+
+            // Prepend a BOM so Excel reads the ৳/UTF-8 correctly.
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `payments-report-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success(`Exported ${rows.length} payment${rows.length > 1 ? 's' : ''}`);
+        } catch {
+            toast.error('Export failed. Please try again.');
+        }
+    };
 
     const orders = ordersData?.data || [];
     const meta = ordersData?.meta || { total: 0, totalPages: 1 };
@@ -44,9 +94,13 @@ export default function PaymentsPage() {
                     <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Payments</h1>
                     <p className="text-gray-500 mt-1">Track all payment transactions and revenue</p>
                 </div>
-                <button className="px-4 py-2.5 bg-white border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2 transition-all shadow-sm">
-                    <FiDownload size={16} />
-                    Export Report
+                <button
+                    onClick={handleExport}
+                    disabled={exporting}
+                    className="px-4 py-2.5 bg-white border border-gray-200 rounded-md text-sm font-medium hover:bg-gray-50 flex items-center gap-2 transition-all shadow-sm disabled:opacity-60 disabled:cursor-wait"
+                >
+                    <FiDownload size={16} className={exporting ? 'animate-pulse' : ''} />
+                    {exporting ? 'Exporting…' : 'Export Report'}
                 </button>
             </div>
 

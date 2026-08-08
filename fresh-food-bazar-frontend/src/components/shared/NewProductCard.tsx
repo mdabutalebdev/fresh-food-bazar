@@ -10,7 +10,6 @@ import {
     useReplyToReviewMutation,
     useLikeReplyMutation,
 } from '@/redux/api/reviewApi';
-import { useToggleWishlistMutation, useGetWishlistQuery } from '@/redux/api/userApi';
 import { useAppDispatch, useAppSelector } from '@/redux';
 import { addToCart } from '@/redux/slices/cartSlice';
 import { toggleWishlist } from '@/redux/slices/wishlistSlice';
@@ -53,49 +52,38 @@ const formatCount = (n: number): string => {
 
 const NewProductCard: React.FC<NewProductCardProps> = ({ product }) => {
 
-    const [toggleWishlistApi] = useToggleWishlistMutation();
     const dispatch = useAppDispatch();
     const productId = String(product._id || product.id);
 
-    // Auth + cart state
-    const { isAuthenticated } = useAppSelector((state: any) => state.auth);
+    // Cart state
     const cartItems = useAppSelector((state: any) => state.cart.items);
     const isInCart = cartItems.some((item: any) => item.id === productId);
 
-    // Wishlist state — server for logged-in users, Redux for guests
+    // Wishlist — single source of truth is the Redux slice (localStorage), so the
+    // header badge, the /wishlist page and the dashboard wishlist all stay in
+    // sync for both guests and logged-in users.
     const localWishlist = useAppSelector((state: any) => state.wishlist.items);
-    const { data: serverWishlist } = useGetWishlistQuery({}, { skip: !isAuthenticated });
-    const serverItems: any[] = serverWishlist?.data || [];
-    const isInWishlist = isAuthenticated
-        ? serverItems.some((item: any) => String(item._id || item.id) === productId)
-        : localWishlist.some((item: any) => item.id === productId);
+    const isInWishlist = localWishlist.some((item: any) => item.id === productId);
     const [wishlistAnim, setWishlistAnim] = useState(false);
     const [showAlreadyAdded, setShowAlreadyAdded] = useState(false);
 
 
 
-    const handleWishlistToggle = async (e: React.MouseEvent) => {
+    const handleWishlistToggle = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setWishlistAnim(true);
         setTimeout(() => setWishlistAnim(false), 400);
-        if (isAuthenticated) {
-            try {
-                await toggleWishlistApi(productId).unwrap();
-            } catch (err) {
-                console.error('Wishlist toggle failed:', err);
-            }
-        } else {
-            dispatch(toggleWishlist({
-                id: productId,
-                name: product.name,
-                price: product.price,
-                mrp: product.originalPrice || product.mrp || product.price,
-                image: product.image,
-                category: product.categoryName || '',
-                rating: product.rating || 0,
-            }));
-        }
+        dispatch(toggleWishlist({
+            id: productId,
+            slug: product.slug,
+            name: product.name,
+            price: product.price,
+            mrp: product.originalPrice || product.mrp || product.price,
+            image: product.image,
+            category: product.categoryName || '',
+            rating: product.rating || 0,
+        }));
     };
 
     const handleAddToCart = (e: React.MouseEvent) => {

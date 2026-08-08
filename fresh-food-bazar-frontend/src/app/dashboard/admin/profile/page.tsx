@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { FiUser, FiLock, FiSave, FiCheckCircle, FiMail, FiPhone } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiUser, FiLock, FiSave, FiCheckCircle, FiMail, FiPhone, FiCamera } from 'react-icons/fi';
 import { useGetMeQuery, useUpdateProfileMutation } from '@/redux/api/userApi';
 import { useUpdatePasswordMutation } from '@/redux/api/authApi';
+import { useUploadAvatarMutation } from '@/redux/api/uploadApi';
+import { useAppDispatch } from '@/redux';
+import { updateUser } from '@/redux/slices/authSlice';
 import { toast } from 'react-hot-toast';
 
 export default function AdminProfilePage() {
@@ -11,6 +14,9 @@ export default function AdminProfilePage() {
     const user = meData?.data;
     const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
     const [updatePassword, { isLoading: isChangingPw }] = useUpdatePasswordMutation();
+    const [uploadAvatar, { isLoading: isUploadingAvatar }] = useUploadAvatarMutation();
+    const dispatch = useAppDispatch();
+    const fileRef = useRef<HTMLInputElement>(null);
 
     const [profile, setProfile] = useState({ firstName: '', lastName: '', phone: '' });
     const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -32,6 +38,28 @@ export default function AdminProfilePage() {
             setTimeout(() => setProfileSuccess(false), 3000);
         } catch (err: any) {
             toast.error(err?.data?.message || 'Failed to update profile');
+        }
+    };
+
+    const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { toast.error('Please choose an image file'); return; }
+        if (file.size > 3 * 1024 * 1024) { toast.error('Image must be under 3MB'); return; }
+        try {
+            const fd = new FormData();
+            fd.append('image', file);
+            const res = await uploadAvatar(fd).unwrap();
+            const url = res?.data?.url;
+            if (!url) throw new Error('Upload failed');
+            await updateProfile({ avatar: url }).unwrap();
+            // Keep the auth store (and so both the admin + storefront headers) in sync.
+            dispatch(updateUser({ avatar: url }));
+            toast.success('Profile photo updated!');
+        } catch (err: any) {
+            toast.error(err?.data?.message || 'Failed to upload photo');
+        } finally {
+            if (fileRef.current) fileRef.current.value = '';
         }
     };
 
@@ -90,6 +118,68 @@ export default function AdminProfilePage() {
                         <FiUser size={18} color="var(--color-primary)" />
                     </div>
                     <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Personal Information</h2>
+                </div>
+
+                {/* Avatar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px', marginBottom: '24px' }}>
+                    <div style={{ position: 'relative' }}>
+                        <div style={{
+                            width: '72px', height: '72px', borderRadius: '50%', overflow: 'hidden',
+                            background: 'linear-gradient(135deg, var(--color-primary), #1a6b3c)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '26px', fontWeight: 800, color: '#fff', flexShrink: 0,
+                        }}>
+                            {user?.avatar ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={user.avatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                (user?.firstName?.[0] || 'A').toUpperCase()
+                            )}
+                        </div>
+                        {/* Camera badge → opens the file picker */}
+                        <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            disabled={isUploadingAvatar}
+                            title="Change photo"
+                            style={{
+                                position: 'absolute', bottom: '-2px', right: '-2px',
+                                width: '26px', height: '26px', borderRadius: '50%',
+                                background: 'var(--color-primary)', color: '#fff', border: '2px solid #fff',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: isUploadingAvatar ? 'wait' : 'pointer',
+                            }}
+                        >
+                            <FiCamera size={12} />
+                        </button>
+                    </div>
+                    <div>
+                        <p style={{ fontSize: '14px', fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
+                            {[user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Admin'}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            disabled={isUploadingAvatar}
+                            style={{
+                                marginTop: '6px', display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                padding: '7px 14px', background: '#f0fdf4', color: 'var(--color-primary)',
+                                border: '1px solid #d1fae5', borderRadius: '8px', fontSize: '12px',
+                                fontWeight: 700, cursor: isUploadingAvatar ? 'wait' : 'pointer',
+                            }}
+                        >
+                            <FiCamera size={13} />
+                            {isUploadingAvatar ? 'Uploading…' : 'Change Photo'}
+                        </button>
+                        <p style={{ fontSize: '11px', color: '#98a2b3', margin: '6px 0 0' }}>JPG, PNG or WEBP · max 3MB</p>
+                    </div>
+                    <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarSelect}
+                        style={{ display: 'none' }}
+                    />
                 </div>
 
                 {/* Email (read-only) */}

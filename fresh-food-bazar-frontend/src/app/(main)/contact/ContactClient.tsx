@@ -92,7 +92,7 @@ export default function ContactClient() {
 
             {/* ── Hero ── */}
             <div className="bg-white border-b border-gray-200">
-                <div className="mx-auto max-w-[1200px] px-4 lg:px-8 py-12 lg:py-14 text-center">
+                <div className="mx-auto max-w-[1500px] px-4 lg:px-8 py-12 lg:py-14 text-center">
                     <span className="inline-block text-[13px] font-semibold px-3.5 py-1 rounded-full" style={{ background: `${ORANGE}1a`, color: ORANGE }}>
                         Contact Us
                     </span>
@@ -105,7 +105,7 @@ export default function ContactClient() {
                 </div>
             </div>
 
-            <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
+            <div className="mx-auto max-w-[1500px] px-4 lg:px-8">
 
                 {/* ── Contact cards ── */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 -mt-8 mb-12">
@@ -125,7 +125,9 @@ export default function ContactClient() {
                             </span>
                             <span className="min-w-0">
                                 <span className="block text-[11px] font-medium uppercase tracking-wide text-gray-400">{card.label}</span>
-                                <span className="block text-[14px] font-semibold truncate" style={{ color: TEXT }}>{card.value}</span>
+                                {/* break-words (not truncate) so a long email/address shows in
+                                    full — wraps to a second line instead of being cut off. */}
+                                <span className="block text-[13.5px] font-semibold break-words" style={{ color: TEXT }}>{card.value}</span>
                             </span>
                         </a>
                     ))}

@@ -118,6 +118,16 @@ export default function ReportAnalysisPage() {
     const totalOrdersCount = STATUS.reduce((s, x) => s + (orderStats[x.key] || 0), 0);
     const avgOrderValue = filteredOrders.length ? rangeRevenue / filteredOrders.length : 0;
 
+    // When a date range is active the headline cards should reflect that range —
+    // otherwise changing the dates looks like it does nothing. Prefer the
+    // server-filtered daily aggregate (accurate, unlimited); fall back to the
+    // client-side filtered orders when the daily series is empty.
+    const rangeActive = Boolean(dateFrom || dateTo);
+    const dailyRevenue = daily.reduce((s: number, d: any) => s + (d.revenue || 0), 0);
+    const dailyOrders = daily.reduce((s: number, d: any) => s + (d.orders || 0), 0);
+    const displayRevenue = rangeActive ? (daily.length ? dailyRevenue : rangeRevenue) : (stats.totalRevenue || 0);
+    const displayOrders = rangeActive ? (daily.length ? dailyOrders : filteredOrders.length) : (stats.totalOrders || 0);
+
     /* ── Exports ── */
     const exportOrders = () => exportToExcel(filteredOrders.map((o: any) => ({
         OrderNo: o.orderNumber || '',
@@ -166,8 +176,8 @@ export default function ReportAnalysisPage() {
     }));
 
     const kpis = [
-        { label: 'Total Revenue', value: money(stats.totalRevenue || 0), sub: `${money(stats.todayRevenue || 0)} today`, icon: FiDollarSign, color: '#059669' },
-        { label: 'Total Orders', value: (stats.totalOrders || 0).toLocaleString(), sub: `${stats.todayOrders || 0} today`, icon: FiShoppingCart, color: '#2563EB' },
+        { label: rangeActive ? 'Revenue · in range' : 'Total Revenue', value: money(displayRevenue), sub: rangeActive ? `${displayOrders.toLocaleString()} orders in range` : `${money(stats.todayRevenue || 0)} today`, icon: FiDollarSign, color: '#059669' },
+        { label: rangeActive ? 'Orders · in range' : 'Total Orders', value: displayOrders.toLocaleString(), sub: rangeActive ? `Avg ${money(displayOrders ? displayRevenue / displayOrders : 0)}` : `${stats.todayOrders || 0} today`, icon: FiShoppingCart, color: '#2563EB' },
         { label: 'Customers', value: (stats.totalCustomers || 0).toLocaleString(), sub: 'Registered accounts', icon: FiUsers, color: '#7C3AED' },
         { label: 'Products', value: (stats.totalProducts || 0).toLocaleString(), sub: `${stats.totalCategories || 0} categories`, icon: FiPackage, color: '#D97706' },
     ];

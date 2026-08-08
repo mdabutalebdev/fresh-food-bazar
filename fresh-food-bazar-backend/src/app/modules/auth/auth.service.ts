@@ -125,6 +125,9 @@ const AuthService = {
         user.password = newPassword;
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
+        // An invited account is "pending" until it sets a password via this link —
+        // activate it so the invitee can log in immediately.
+        if (user.status === 'pending') user.status = 'active';
         await user.save();
     },
 
