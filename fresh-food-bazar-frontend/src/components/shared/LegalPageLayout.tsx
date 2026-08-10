@@ -13,13 +13,9 @@ interface LegalPageProps {
     ctaTitle: string;
     ctaDescription: string;
     ctaButtonText: string;
-    /* Content max-width. Legal pages (terms/privacy/refund) stay narrow for
-       readability; marketing pages like About pass a wider value to fill the
-       container like the rest of the site. */
-    maxWidth?: string;
 }
 
-const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, ctaDescription, ctaButtonText, maxWidth = '1120px' }: LegalPageProps) => {
+const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, ctaDescription, ctaButtonText }: LegalPageProps) => {
     const { data: response, isLoading } = useGetLegalPageQuery(slug);
     const page = response?.data;
 
@@ -41,19 +37,19 @@ const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, cta
     return (
         <div className="bg-[var(--color-background)] min-h-screen">
             {/* ══ HERO HEADER ══ */}
-            <div style={{ background: 'linear-gradient(180deg, #fff 0%, #f8f9fb 100%)', borderBottom: '1px solid #eef0f3' }}>
-                <div style={{ maxWidth, margin: '0 auto', padding: '48px 24px 44px', textAlign: 'center' }}>
+            <div>
+                <div className="container mx-auto px-2" style={{ padding: '24px 24px 12px', textAlign: 'center' }}>
                     {/* Breadcrumb */}
                     <Link
                         href="/"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#9ca3af', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '24px' }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#9ca3af', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}
                     >
                         <FiChevronLeft size={12} />
                         Back to Home
                     </Link>
 
                     {/* Icon Badge */}
-                    <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: `${accentColor}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: accentColor }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${accentColor}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: accentColor }}>
                         {icon}
                     </div>
 
@@ -73,9 +69,9 @@ const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, cta
             </div>
 
             {/* ══ CONTENT ══ */}
-            <div style={{ maxWidth, margin: '0 auto', padding: '40px 24px 60px' }}>
+            <div className="container mx-auto px-2" style={{ padding: '16px 24px 40px' }}>
                 <div
-                    style={{ background: '#fff', borderRadius: '14px', border: '1px solid #eef0f3', padding: '36px 40px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}
+                    style={{ borderRadius: '14px', padding: '0 0' }}
                 >
                     <div
                         className="legal-content"
@@ -84,7 +80,7 @@ const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, cta
                 </div>
 
                 {/* ══ CONTACT CTA ══ */}
-                <div style={{ marginTop: '32px', textAlign: 'center', padding: '28px 24px', background: '#fff', borderRadius: '14px', border: '1px solid #eef0f3' }}>
+                <div style={{ marginTop: '32px', textAlign: 'center', padding: '28px 24px', borderRadius: '14px' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#111', margin: '0 0 4px' }}>{ctaTitle}</h3>
                     <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 16px' }}>{ctaDescription}</p>
                     <Link

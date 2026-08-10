@@ -79,7 +79,7 @@ const CheckoutPage = () => {
 
     const [selectedPayment, setSelectedPayment] = useState('bkash');
     const [paymentDetails, setPaymentDetails] = useState({
-        senderNumber: '', transactionId: '', paymentTime: '',
+        senderNumber: '', transactionId: '',
     });
     const [copied, setCopied] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -125,9 +125,11 @@ const CheckoutPage = () => {
         }
     }, [isAuthenticated, user]);
 
+    const orderPlacedRef = useRef(false);
+
     useEffect(() => {
         // Straight home — /cart only bounces back here now
-        if (items.length === 0) router.push('/');
+        if (!orderPlacedRef.current && items.length === 0) router.push('/');
     }, [items, router]);
 
     // GA4: begin_checkout â€” fires once when the page first has items.
@@ -172,7 +174,6 @@ const CheckoutPage = () => {
         if (selectedPayment !== 'cod') {
             if (!paymentDetails.senderNumber.trim()) e.senderNumber = 'Sender number is required';
             if (!paymentDetails.transactionId.trim()) e.transactionId = 'Transaction ID is required';
-            if (!paymentDetails.paymentTime.trim()) e.paymentTime = 'Payment time is required';
         }
         // Billing is only validated when it isn't the same as shipping.
         if (!billingSame) {
@@ -198,7 +199,7 @@ const CheckoutPage = () => {
             const couponData = {
                 code,
                 discount: result.data?.discount ?? 0,
-                finalAmount: result.data?.finalAmount ?? totalPrice,
+                finalAmount: totalPrice - (result.data?.discount ?? 0),
             };
             setAppliedCoupon(couponData);
             localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify(couponData));
@@ -242,7 +243,7 @@ const CheckoutPage = () => {
 
         // GA4: snapshot the cart for analytics before it gets cleared on success.
         const gaItems: GaItem[] = items.map((it) => toGaItem(it, { quantity: it.quantity }));
-        const gaValue = appliedCoupon ? appliedCoupon.finalAmount : totalPrice;
+        const gaValue = totalPrice - (appliedCoupon?.discount || 0);
         trackAddPaymentInfo(gaItems, selectedPayment, appliedCoupon?.code);
 
         const orderPayload = {
@@ -265,7 +266,6 @@ const CheckoutPage = () => {
             paymentDetails: selectedPayment === 'cod' ? {} : {
                 senderNumber: paymentDetails.senderNumber,
                 transactionId: paymentDetails.transactionId,
-                paymentTime: paymentDetails.paymentTime,
             },
             ...(note.trim() ? { note: note.trim() } : {}),
             ...(appliedCoupon ? { couponCode: appliedCoupon.code, discount: appliedCoupon.discount } : {}),
@@ -295,6 +295,7 @@ const CheckoutPage = () => {
                 dispatch(updateUser({ address: userAddress }));
                 
                 const res = await createOrder(orderPayload).unwrap();
+                orderPlacedRef.current = true;
                 dispatch(clearCart());
                 localStorage.removeItem(COUPON_STORAGE_KEY);
                 toast.success('Order placed successfully!', { duration: 5000 });
@@ -303,6 +304,7 @@ const CheckoutPage = () => {
                 router.push(`/checkout/success${oid ? `?order=${encodeURIComponent(oid)}` : ''}`);
             } else {
                 const result = await guestCheckout(orderPayload).unwrap();
+                orderPlacedRef.current = true;
                 dispatch(clearCart());
                 localStorage.removeItem(COUPON_STORAGE_KEY);
 
@@ -510,8 +512,11 @@ const CheckoutPage = () => {
                                     </h2>
                                     <label className="flex items-center gap-2.5 text-[13px] text-gray-600 cursor-pointer">
                                         Same as shipping
-                                        <input type="checkbox" checked={billingSame} onChange={e => setBillingSame(e.target.checked)}
-                                            className="w-4 h-4 cursor-pointer" style={{ accentColor: ORANGE }} />
+                                        <div className="relative flex items-center">
+                                            <input type="checkbox" checked={billingSame} onChange={e => setBillingSame(e.target.checked)}
+                                                className="w-4 h-4 cursor-pointer appearance-none rounded border border-gray-300 checked:bg-[#F47B20] checked:border-[#F47B20] transition-colors" />
+                                            {billingSame && <FiCheck className="absolute inset-0 m-auto text-white pointer-events-none" size={12} strokeWidth={4} />}
+                                        </div>
                                     </label>
                                 </div>
                                 {!billingSame && (
@@ -627,21 +632,13 @@ const CheckoutPage = () => {
                                                         onChange={handlePaymentDetailChange} placeholder="Number you sent money from" className={cls('senderNumber')} />
                                                     <FieldError field="senderNumber" />
                                                 </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     <div>
                                                         <label className={labelClass}>Transaction ID <span className="text-red-500">*</span></label>
                                                         <input type="text" name="transactionId" value={paymentDetails.transactionId}
                                                             onChange={handlePaymentDetailChange} placeholder="e.g. 9A1B2C3D4E" className={cls('transactionId')} />
                                                         <FieldError field="transactionId" />
                                                     </div>
-                                                    <div>
-                                                        <label className={labelClass}>Payment Time <span className="text-red-500">*</span></label>
-                                                        <input type="datetime-local" name="paymentTime" value={paymentDetails.paymentTime}
-                                                            onChange={handlePaymentDetailChange} className={cls('paymentTime')} />
-                                                        <FieldError field="paymentTime" />
-                                                    </div>
                                                 </div>
-                                            </div>
                                         </>
                                     )}
                                 </div>
@@ -720,7 +717,7 @@ const CheckoutPage = () => {
                                 <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                                     <span className="text-[14px] font-semibold text-[#222831]">Total</span>
                                     <span className="text-[16px] font-bold text-[#222831]">
-                                        {(appliedCoupon ? appliedCoupon.finalAmount : totalPrice).toLocaleString()}.00 BDT
+                                        {(totalPrice - (appliedCoupon?.discount || 0)).toLocaleString()}.00 BDT
                                     </span>
                                 </div>
                             </div>

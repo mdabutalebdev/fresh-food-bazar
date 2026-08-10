@@ -18,7 +18,6 @@ export default function AboutPage() {
             ctaTitle="Want to know more?"
             ctaDescription="Our team is happy to answer any question."
             ctaButtonText="Contact Us"
-            maxWidth="1500px"
         />
     );
 }

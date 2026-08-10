@@ -89,16 +89,10 @@ const OrderService = {
             let thumb = product.thumbnail;
 
             if (variant) {
-                const vDiscount = variant.discount || 0;
-                unitPrice = vDiscount > 0
-                    ? Math.round(variant.price - (variant.price * vDiscount) / 100)
-                    : variant.price;
+                unitPrice = variant.price;
                 if (variant.images?.[0]) thumb = variant.images[0];
             } else {
-                const pDiscount = product.discount || 0;
-                unitPrice = pDiscount > 0
-                    ? Math.round(product.price - (product.price * pDiscount) / 100)
-                    : product.price;
+                unitPrice = product.price;
             }
 
             // Note: out-of-stock items are still allowed (sourcing model — the
