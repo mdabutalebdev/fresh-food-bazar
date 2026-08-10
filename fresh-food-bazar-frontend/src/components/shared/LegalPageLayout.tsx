@@ -100,6 +100,8 @@ const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, cta
             </div>
 
             <style>{`
+                .legal-content { width: 100%; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
+                .legal-content * { max-width: 100% !important; }
                 .legal-content h1 { font-size: 22px; font-weight: 800; color: #111; margin: 28px 0 12px; letter-spacing: -0.3px; }
                 .legal-content h2 { font-size: 17px; font-weight: 700; color: #1a1a1a; margin: 28px 0 10px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
                 .legal-content h3 { font-size: 15px; font-weight: 600; color: #333; margin: 20px 0 8px; }
@@ -112,12 +114,13 @@ const LegalPageLayout = ({ slug, fallbackTitle, icon, accentColor, ctaTitle, cta
                 .legal-content a:hover { text-decoration-color: var(--color-primary); }
                 .legal-content strong { color: #222; font-weight: 700; }
                 .legal-content hr { border: none; border-top: 1px solid #eee; margin: 28px 0; }
-                .legal-content table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+                .legal-content table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; display: block; overflow-x: auto; }
                 .legal-content th, .legal-content td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }
                 .legal-content th { background: #f8f9fa; font-weight: 700; color: #333; }
                 @media (max-width: 640px) {
                     .legal-content h1 { font-size: 19px; }
                     .legal-content h2 { font-size: 16px; }
+                    .legal-content p, .legal-content li { font-size: 13.5px; }
                 }
             `}</style>
         </div>
