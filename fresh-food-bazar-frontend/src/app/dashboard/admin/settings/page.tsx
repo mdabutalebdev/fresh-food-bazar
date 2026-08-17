@@ -100,6 +100,10 @@ export default function SettingsPage() {
                     faviconUrl: '',
                     primaryTextMode: 'auto',
                 },
+                deliveryCharge: res.data.deliveryCharge || {
+                    insideDhaka: 60,
+                    outsideDhaka: 120,
+                },
             });
         }
     }, [res]);
@@ -112,6 +116,9 @@ export default function SettingsPage() {
     };
     const updateTheme = (field: string, value: any) => {
         setFormData((p: any) => ({ ...p, theme: { ...p.theme, [field]: value } }));
+    };
+    const updateDeliveryCharge = (field: string, value: any) => {
+        setFormData((p: any) => ({ ...p, deliveryCharge: { ...p.deliveryCharge, [field]: value } }));
     };
 
     const handleSave = async () => {
@@ -303,6 +310,14 @@ export default function SettingsPage() {
                                 <option value="CNY">¥ CNY - Chinese Yuan</option>
                             </select>
                         </div>
+                    </div>
+                </SettingSection>
+
+                {/* ═══════ DELIVERY CHARGES ═══════ */}
+                <SettingSection icon={FiSettings} title="Delivery Charges" description="Configure delivery costs based on location">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <InputField label="Inside Dhaka (৳)" type="number" value={formData.deliveryCharge?.insideDhaka ?? 60} onChange={(e: any) => updateDeliveryCharge('insideDhaka', Number(e.target.value))} placeholder="e.g. 60" />
+                        <InputField label="Outside Dhaka (৳)" type="number" value={formData.deliveryCharge?.outsideDhaka ?? 120} onChange={(e: any) => updateDeliveryCharge('outsideDhaka', Number(e.target.value))} placeholder="e.g. 120" />
                     </div>
                 </SettingSection>
 

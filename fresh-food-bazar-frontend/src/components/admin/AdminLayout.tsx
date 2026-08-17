@@ -8,7 +8,7 @@ import {
     FiGrid, FiLogOut, FiMenu, FiX, FiChevronDown,
     FiShoppingCart, FiUser, FiChevronLeft,
     FiLayout, FiBarChart2, FiTag, FiStar, FiTrendingUp,
-    FiSearch, FiCreditCard,
+    FiSearch, FiCreditCard, FiTruck,
 } from 'react-icons/fi';
 import BrandLogo from '@/components/shared/BrandLogo';
 import AdminNotifications from './AdminNotifications';
@@ -67,6 +67,7 @@ const MENU: MenuItem[] = [
             { name: 'Legal Pages', href: '/dashboard/admin/site-content?tab=legal' },
         ],
     },
+    { name: 'Delivery Charge', href: '/dashboard/admin/delivery-charge', icon: FiTruck },
     { name: 'Profile', href: '/dashboard/admin/profile', icon: FiUser },
 ];
 

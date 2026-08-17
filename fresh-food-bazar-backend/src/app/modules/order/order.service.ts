@@ -128,8 +128,17 @@ const OrderService = {
             }
         }
 
-        const shippingCost = 0; // Shipping disabled
-        const total = subtotal - discount;
+        let shippingCost = 0;
+        const siteContent: any = await require('../siteContent/siteContent.model').SiteContent.findOne({ _key: 'main' });
+        if (siteContent && siteContent.deliveryCharge) {
+            const dc = siteContent.deliveryCharge;
+            if (shippingAddress.city === 'Dhaka') {
+                shippingCost = dc.insideDhaka || 60;
+            } else if (shippingAddress.city) {
+                shippingCost = dc.outsideDhaka || 120;
+            }
+        }
+        const total = subtotal - discount + shippingCost;
 
         // Create order
         const order = await Order.create({
