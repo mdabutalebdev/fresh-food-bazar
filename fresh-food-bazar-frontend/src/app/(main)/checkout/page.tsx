@@ -243,7 +243,7 @@ const CheckoutPage = () => {
 
         // GA4: snapshot the cart for analytics before it gets cleared on success.
         const gaItems: GaItem[] = items.map((it) => toGaItem(it, { quantity: it.quantity }));
-        const gaValue = totalPrice - (appliedCoupon?.discount || 0);
+        const gaValue = totalPrice - (appliedCoupon?.discount || 0) + deliveryCost;
         trackAddPaymentInfo(gaItems, selectedPayment, appliedCoupon?.code);
 
         const orderPayload = {
@@ -339,6 +339,12 @@ const CheckoutPage = () => {
     };
 
     const isSubmitting = isPlacingOrder || isGuestPlacing;
+
+    let deliveryCost = 0;
+    if (formData.city) {
+        deliveryCost = formData.city === 'Dhaka' ? (siteRes?.data?.deliveryCharge?.insideDhaka ?? 60) : (siteRes?.data?.deliveryCharge?.outsideDhaka ?? 120);
+    }
+    const finalTotal = totalPrice - (appliedCoupon?.discount || 0) + deliveryCost;
 
     const cls = (field: string) =>
         `${inputClass} ${errors[field] ? 'border-red-400 focus:border-red-500' : ''}`;
@@ -712,12 +718,16 @@ const CheckoutPage = () => {
                                 )}
                                 <div className="flex justify-between text-[13.5px]">
                                     <span className="text-gray-500">Delivery cost</span>
-                                    <span className="text-gray-500 text-[12px] italic">To be confirmed</span>
+                                    {formData.city ? (
+                                        <span className="text-[#222831]">{deliveryCost.toLocaleString()}.00 BDT</span>
+                                    ) : (
+                                        <span className="text-gray-500 text-[12px] italic">To be confirmed</span>
+                                    )}
                                 </div>
                                 <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                                     <span className="text-[14px] font-semibold text-[#222831]">Total</span>
                                     <span className="text-[16px] font-bold text-[#222831]">
-                                        {(totalPrice - (appliedCoupon?.discount || 0)).toLocaleString()}.00 BDT
+                                        {finalTotal.toLocaleString()}.00 BDT
                                     </span>
                                 </div>
                             </div>
