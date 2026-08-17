@@ -167,6 +167,18 @@ function SuccessContent() {
                                     <span className="text-gray-500">Payment Method</span>
                                     <span className="font-semibold text-[#222831] uppercase">{order.paymentMethod || 'COD'}</span>
                                 </div>
+                                {(order.paymentDetails?.senderNumber) && (
+                                    <div className="flex justify-between items-center text-[13.5px] mt-2 pt-2 border-t border-gray-50">
+                                        <span className="text-gray-500">Sender Number</span>
+                                        <span className="font-medium text-[#222831] font-mono">{order.paymentDetails.senderNumber}</span>
+                                    </div>
+                                )}
+                                {(order.paymentDetails?.transactionId || order.transactionId) && (
+                                    <div className="flex justify-between items-center text-[13.5px] mt-2 pt-2 border-t border-gray-50">
+                                        <span className="text-gray-500">Transaction ID</span>
+                                        <span className="font-medium text-[#222831] font-mono">{order.paymentDetails?.transactionId || order.transactionId}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between items-center text-[13.5px] mt-2 pt-2 border-t border-gray-50">
                                     <span className="text-gray-500">Payment Status</span>
                                     <span className={`font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider ${

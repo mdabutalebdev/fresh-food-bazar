@@ -78,6 +78,12 @@ const siteContentSchema = new Schema({
     // Only one document — singleton
     _key: { type: String, default: 'main', unique: true },
 
+    // ── Delivery Charge ──
+    deliveryCharge: {
+        insideDhaka: { type: Number, default: 60 },
+        outsideDhaka: { type: Number, default: 120 },
+    },
+
     // ── Header Ticker ──
     ticker: [tickerItemSchema],
 

@@ -256,10 +256,10 @@ export default function OrderDetailsPage() {
                                         <div className="flex justify-between">
                                             <p className="text-sm font-bold text-gray-800 capitalize">{step.status}</p>
                                             <span className="text-[10px] text-gray-400 font-bold whitespace-nowrap">
-                                                {new Date(step.timestamp).toLocaleString()}
+                                                {new Date(step.createdAt || step.timestamp).toLocaleString()}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-500 mt-1">{step.message}</p>
+                                        <p className="text-sm text-gray-500 mt-1">{step.note || step.message}</p>
                                     </div>
                                 </div>
                             )) || <p className="text-gray-400 text-center italic py-4">No timeline available</p>}
