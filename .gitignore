@@ -2,4 +2,7 @@
 **/.next
 **/dist
 **/build
-config.bat
+
+# local environment files
+.env
+.env.local
